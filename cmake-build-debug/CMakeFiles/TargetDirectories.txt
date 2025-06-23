@@ -1,0 +1,3 @@
+C:/Users/soura/OneDrive/Desktop/RubiksCube/cmake-build-debug/CMakeFiles/RubiksCube.dir
+C:/Users/soura/OneDrive/Desktop/RubiksCube/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/soura/OneDrive/Desktop/RubiksCube/cmake-build-debug/CMakeFiles/rebuild_cache.dir
