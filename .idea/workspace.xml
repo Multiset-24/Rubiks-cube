@@ -20,7 +20,9 @@
     <option name="reloaded" value="true" />
   </component>
   <component name="CMakeRunConfigurationManager">
-    <generated />
+    <generated>
+      <config projectName="Project" targetName="RubiksCube" />
+    </generated>
   </component>
   <component name="CMakeSettings">
     <configurations>
