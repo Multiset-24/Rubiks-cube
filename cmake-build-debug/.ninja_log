@@ -2,6 +2,16 @@
 11	4742	7723117265698773	CMakeFiles/RubiksCube.dir/main.cpp.obj	dbc41d46f2c6344f
 4742	5075	7723117313011882	RubiksCube.exe	78727a5b5f659cf6
 22	4381	7723117265808896	CMakeFiles/RubiksCube.dir/Model/RubiksCube3dArray.cpp.obj	5f7e324dd8a4f04b
-6	525	7723908192998030	build.ninja	7368bf3855a628c4
+6	525	7724762757309141	build.ninja	7368bf3855a628c4
 44	2166	7720446767402149	CMakeFiles/RubiksCube.dir/Model/RubiksCube.cpp.obj	1d2f9d6b9364c481
 25	3388	7723099732112075	CMakeFiles/RubiksCube.dir/Model/RubiksCube1dArray.cpp.obj	8a7836435f0c18c4
+64	237	7724767426819982	CMakeFiles/RubiksCube.dir/Pattern_Database/math.cpp.obj	cb7197c5960b820
+54	239	7724767426719984	CMakeFiles/RubiksCube.dir/Pattern_Database/NibbleArr.cpp.obj	82cc59052cb5c7f9
+59	246	7724767426769962	CMakeFiles/RubiksCube.dir/Pattern_Database/PatternDatabase.cpp.obj	6fa1dd94b0a10817
+43	247	7724767426609956	CMakeFiles/RubiksCube.dir/Pattern_Database/CornderDBMaker.cpp.obj	f4213701cc17c901
+49	249	7724767426669975	CMakeFiles/RubiksCube.dir/Pattern_Database/CornerPatternDatabase.cpp.obj	3badfd5b42672d68
+39	2217	7724767426569977	CMakeFiles/RubiksCube.dir/Model/RubiksCube3dArray.cpp.obj	137025d38d4a3a09
+35	2219	7724767426529965	CMakeFiles/RubiksCube.dir/Model/RubiksCube1dArray.cpp.obj	85541ad86284d226
+30	2367	7724767426479951	CMakeFiles/RubiksCube.dir/Model/RubiksCube.cpp.obj	13dabdad5cbf0854
+22	2382	7724767426399951	CMakeFiles/RubiksCube.dir/main.cpp.obj	2420180ddcc177cd
+2382	2630	7724767450000184	RubiksCube.exe	b7458ce28717a55a

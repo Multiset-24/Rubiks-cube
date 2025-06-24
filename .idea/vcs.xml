@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/../Akuitee_Backend_v2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Clones/Advanced-Product-Catalog" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Clones/CAD_TEST" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../CodeDuel" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Programming" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Programming/DEVELOPMENT/GIT AND GITHUB" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Programming/DEVELOPMENT/GIT AND GITHUB/one" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
   </component>
 </project>
