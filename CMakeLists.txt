@@ -21,4 +21,5 @@ target_include_directories(RubiksCube PRIVATE
         "${CMAKE_SOURCE_DIR}/Model"
         "${CMAKE_SOURCE_DIR}/Solvers"
         "${CMAKE_SOURCE_DIR}/Pattern_Database"
+        "${CMAKE_SOURCE_DIR}/Model/PatternDatabase"
 )

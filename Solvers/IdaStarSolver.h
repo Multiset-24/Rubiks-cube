@@ -4,7 +4,7 @@
 
 #include<bits/stdc++.h>
 #include "../Model/RubiksCube.h"
-#include "../Model/PatternDatabase/PatternDatabase.h"
+// #include "../Model/PatternDatabase/PatternDatabase.h"
 #include "../Pattern_Database/CornerPatternDatabase.h"
 
 #ifndef RUBIKS_CUBE_SOLVER_IDASTARSOLVER_H

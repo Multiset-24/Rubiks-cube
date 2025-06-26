@@ -52,70 +52,70 @@ build cmake_object_order_depends_target_RubiksCube: phony || .
 build CMakeFiles/RubiksCube.dir/main.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/main.cpp || cmake_object_order_depends_target_RubiksCube
   DEP_FILE = CMakeFiles\RubiksCube.dir\main.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database
+  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model/PatternDatabase
   OBJECT_DIR = CMakeFiles\RubiksCube.dir
   OBJECT_FILE_DIR = CMakeFiles\RubiksCube.dir
 
 build CMakeFiles/RubiksCube.dir/Model/RubiksCube.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/Model/RubiksCube.cpp || cmake_object_order_depends_target_RubiksCube
   DEP_FILE = CMakeFiles\RubiksCube.dir\Model\RubiksCube.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database
+  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model/PatternDatabase
   OBJECT_DIR = CMakeFiles\RubiksCube.dir
   OBJECT_FILE_DIR = CMakeFiles\RubiksCube.dir\Model
 
 build CMakeFiles/RubiksCube.dir/Model/RubiksCube1dArray.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/Model/RubiksCube1dArray.cpp || cmake_object_order_depends_target_RubiksCube
   DEP_FILE = CMakeFiles\RubiksCube.dir\Model\RubiksCube1dArray.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database
+  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model/PatternDatabase
   OBJECT_DIR = CMakeFiles\RubiksCube.dir
   OBJECT_FILE_DIR = CMakeFiles\RubiksCube.dir\Model
 
 build CMakeFiles/RubiksCube.dir/Model/RubiksCube3dArray.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/Model/RubiksCube3dArray.cpp || cmake_object_order_depends_target_RubiksCube
   DEP_FILE = CMakeFiles\RubiksCube.dir\Model\RubiksCube3dArray.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database
+  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model/PatternDatabase
   OBJECT_DIR = CMakeFiles\RubiksCube.dir
   OBJECT_FILE_DIR = CMakeFiles\RubiksCube.dir\Model
 
-build CMakeFiles/RubiksCube.dir/Model/RubiksCubebitBoard.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/Model/RubiksCubebitBoard.cpp || cmake_object_order_depends_target_RubiksCube
-  DEP_FILE = CMakeFiles\RubiksCube.dir\Model\RubiksCubebitBoard.cpp.obj.d
+build CMakeFiles/RubiksCube.dir/Model/RubiksCubeBitBoard.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/Model/RubiksCubeBitBoard.cpp || cmake_object_order_depends_target_RubiksCube
+  DEP_FILE = CMakeFiles\RubiksCube.dir\Model\RubiksCubeBitBoard.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database
+  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model/PatternDatabase
   OBJECT_DIR = CMakeFiles\RubiksCube.dir
   OBJECT_FILE_DIR = CMakeFiles\RubiksCube.dir\Model
 
 build CMakeFiles/RubiksCube.dir/Pattern_Database/CornerDBMaker.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database/CornerDBMaker.cpp || cmake_object_order_depends_target_RubiksCube
   DEP_FILE = CMakeFiles\RubiksCube.dir\Pattern_Database\CornerDBMaker.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database
+  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model/PatternDatabase
   OBJECT_DIR = CMakeFiles\RubiksCube.dir
   OBJECT_FILE_DIR = CMakeFiles\RubiksCube.dir\Pattern_Database
 
 build CMakeFiles/RubiksCube.dir/Pattern_Database/CornerPatternDatabase.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database/CornerPatternDatabase.cpp || cmake_object_order_depends_target_RubiksCube
   DEP_FILE = CMakeFiles\RubiksCube.dir\Pattern_Database\CornerPatternDatabase.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database
+  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model/PatternDatabase
   OBJECT_DIR = CMakeFiles\RubiksCube.dir
   OBJECT_FILE_DIR = CMakeFiles\RubiksCube.dir\Pattern_Database
 
 build CMakeFiles/RubiksCube.dir/Pattern_Database/NibbleArray.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database/NibbleArray.cpp || cmake_object_order_depends_target_RubiksCube
   DEP_FILE = CMakeFiles\RubiksCube.dir\Pattern_Database\NibbleArray.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database
+  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model/PatternDatabase
   OBJECT_DIR = CMakeFiles\RubiksCube.dir
   OBJECT_FILE_DIR = CMakeFiles\RubiksCube.dir\Pattern_Database
 
 build CMakeFiles/RubiksCube.dir/Pattern_Database/PatternDatabase.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database/PatternDatabase.cpp || cmake_object_order_depends_target_RubiksCube
   DEP_FILE = CMakeFiles\RubiksCube.dir\Pattern_Database\PatternDatabase.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database
+  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model/PatternDatabase
   OBJECT_DIR = CMakeFiles\RubiksCube.dir
   OBJECT_FILE_DIR = CMakeFiles\RubiksCube.dir\Pattern_Database
 
 build CMakeFiles/RubiksCube.dir/Pattern_Database/math.cpp.obj: CXX_COMPILER__RubiksCube_unscanned_Debug C$:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database/math.cpp || cmake_object_order_depends_target_RubiksCube
   DEP_FILE = CMakeFiles\RubiksCube.dir\Pattern_Database\math.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database
+  INCLUDES = -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Solvers -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Pattern_Database -IC:/Users/soura/OneDrive/Desktop/RubiksCube/Model/PatternDatabase
   OBJECT_DIR = CMakeFiles\RubiksCube.dir
   OBJECT_FILE_DIR = CMakeFiles\RubiksCube.dir\Pattern_Database
 
@@ -127,7 +127,7 @@ build CMakeFiles/RubiksCube.dir/Pattern_Database/math.cpp.obj: CXX_COMPILER__Rub
 #############################################
 # Link the executable RubiksCube.exe
 
-build RubiksCube.exe: CXX_EXECUTABLE_LINKER__RubiksCube_Debug CMakeFiles/RubiksCube.dir/main.cpp.obj CMakeFiles/RubiksCube.dir/Model/RubiksCube.cpp.obj CMakeFiles/RubiksCube.dir/Model/RubiksCube1dArray.cpp.obj CMakeFiles/RubiksCube.dir/Model/RubiksCube3dArray.cpp.obj CMakeFiles/RubiksCube.dir/Model/RubiksCubebitBoard.cpp.obj CMakeFiles/RubiksCube.dir/Pattern_Database/CornerDBMaker.cpp.obj CMakeFiles/RubiksCube.dir/Pattern_Database/CornerPatternDatabase.cpp.obj CMakeFiles/RubiksCube.dir/Pattern_Database/NibbleArray.cpp.obj CMakeFiles/RubiksCube.dir/Pattern_Database/PatternDatabase.cpp.obj CMakeFiles/RubiksCube.dir/Pattern_Database/math.cpp.obj
+build RubiksCube.exe: CXX_EXECUTABLE_LINKER__RubiksCube_Debug CMakeFiles/RubiksCube.dir/main.cpp.obj CMakeFiles/RubiksCube.dir/Model/RubiksCube.cpp.obj CMakeFiles/RubiksCube.dir/Model/RubiksCube1dArray.cpp.obj CMakeFiles/RubiksCube.dir/Model/RubiksCube3dArray.cpp.obj CMakeFiles/RubiksCube.dir/Model/RubiksCubeBitBoard.cpp.obj CMakeFiles/RubiksCube.dir/Pattern_Database/CornerDBMaker.cpp.obj CMakeFiles/RubiksCube.dir/Pattern_Database/CornerPatternDatabase.cpp.obj CMakeFiles/RubiksCube.dir/Pattern_Database/NibbleArray.cpp.obj CMakeFiles/RubiksCube.dir/Pattern_Database/PatternDatabase.cpp.obj CMakeFiles/RubiksCube.dir/Pattern_Database/math.cpp.obj
   FLAGS = -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\RubiksCube.dir

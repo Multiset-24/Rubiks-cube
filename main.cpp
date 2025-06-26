@@ -3,6 +3,7 @@
 #include "BfsSolver.h"
 #include "DfsSolver.h"
 #include "IdaStarSolver.h"
+#include "IddfsSolver.h"
 using namespace std;
 #include "Model/RubiksCube3dArray.cpp"
 #include "Model/RubiksCube1dArray.cpp"
@@ -83,12 +84,12 @@ int main() {
 
 
     RubiksCube3dArray cube(customCube);
-    vector<RubiksCube::MOVE>shuffled_moves=cube.randomShuffleCube(5);
+    vector<RubiksCube::MOVE>shuffled_moves=cube.randomShuffleCube(6);
     cube.print();
-    IDAstarSolver<RubiksCube3dArray,Hash3d>idastarsolver(cube,"");
-    vector<RubiksCube::MOVE>solve_moves=idastarsolver.solve();
+    IDAstarSolver<RubiksCube3dArray,Hash3d>ida_starsolver(cube,"");
+    vector<RubiksCube::MOVE>solve_moves=ida_starsolver.solve();
     for (auto move:solve_moves)cout<<cube.getMove(move)<<" ";
-    idastarsolver.rubiksCube.print();
+    ida_starsolver.rubiksCube.print();
     cout<<"\n";
     return 0;
 }

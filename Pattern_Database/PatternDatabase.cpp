@@ -6,7 +6,7 @@
 using namespace std;
 
 PatternDatabase::PatternDatabase(const size_t size) :
-        database(size, 0xFF), size(size), numItems(0) {
+        database(size, 0xFF), size(size), numItems(0) {// data base is is the nibble class initialsed in .h file
 }
 
 PatternDatabase::PatternDatabase(const size_t size, uint8_t init_val) :

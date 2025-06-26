@@ -37,12 +37,14 @@
       <change beforePath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.C_Creating_Keys_for_StORages_Has_Become_My_Main_Skill.cpp_babea9c26b0914870ddb93081e1d5cd7.prob" beforeDir="false" afterPath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.C_Creating_Keys_for_StORages_Has_Become_My_Main_Skill.cpp_babea9c26b0914870ddb93081e1d5cd7.prob" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.Nested_Ranges_Count.cpp_580250091e85ffff5296892e7b52d638.prob" beforeDir="false" afterPath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.Nested_Ranges_Count.cpp_580250091e85ffff5296892e7b52d638.prob" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Model/RubiksCube3dArray.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Model/RubiksCube3dArray.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pattern_Database/CornerDBMaker.h" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/CornerDBMaker.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pattern_Database/NibbleArray.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/NibbleArray.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pattern_Database/math.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/math.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Solvers/DfsSolver.h" beforeDir="false" afterPath="$PROJECT_DIR$/Solvers/DfsSolver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Solvers/IdaStarSolver.h" beforeDir="false" afterPath="$PROJECT_DIR$/Solvers/IdaStarSolver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Pattern_Database/CornerPatternDatabase.h" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/CornerPatternDatabase.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Pattern_Database/PatternDatabase.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/PatternDatabase.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Pattern_Database/PatternDatabase.h" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/PatternDatabase.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Pattern_Database/PermutationIndexer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/PermutationIndexer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-e48cf673e00d496f7744.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/index-2025-06-26T11-13-44-0670.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/target-RubiksCube-Debug-83b14315c9e55039d633.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" afterDir="false" />
@@ -57,6 +59,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="ClangdSettings">
+    <option name="clangTidyViaClangd" value="false" />
     <option name="formatViaClangd" value="false" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -78,6 +81,7 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/Pattern_Database/CornerPatternDatabase.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Pattern_Database/NibbleArray.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Pattern_Database/PatternDatabase.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
@@ -159,7 +163,7 @@
       <workItem from="1750771296423" duration="2334000" />
       <workItem from="1750773669407" duration="56000" />
       <workItem from="1750773736093" duration="5837000" />
-      <workItem from="1750929674271" duration="6502000" />
+      <workItem from="1750929674271" duration="10937000" />
     </task>
     <task id="LOCAL-00001" summary="THis is to initial the rubiks cube project">
       <option name="closed" value="true" />
