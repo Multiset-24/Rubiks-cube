@@ -50,11 +50,7 @@ By studying and extending this project, you’ll deepen your understanding of se
 
 ````
 RubiksCubeSolver/
-├── .gitignore
-├── CMakeLists.txt
-├── LICENSE
-├── main.cpp
-├── README.md
+├── assets
 ├── cmake-build-debug/           
 ├── DataBase/
 │   ├── CornerDatabase.txt              
@@ -83,6 +79,11 @@ RubiksCubeSolver/
          ├── DfsSolver.h
          ├── IdaStarSolver.h
          └── IddfsSolver.h
+├── .gitignore
+├── CMakeLists.txt
+├── LICENSE
+├── main.cpp
+├── README.md
 ````
 
 
@@ -98,7 +99,7 @@ git clone https://github.com/Multiset-24/Rubiks-cube.git and then open folder in
 # 2.Click on edit configuration options as shown below image for you there will bw no Rubiks cube there so click on edit configuration or add configurations
 ```
 
-<img alt="img.png" src="img.png" width="300"/>
+<img alt="img.png" src="assets/img.png" width="300"/>
 
 ```bash
 # 3.Now click on + options on top left in appeared window
@@ -106,7 +107,7 @@ git clone https://github.com/Multiset-24/Rubiks-cube.git and then open folder in
 # 4.Now click on Cmake Application and fill the options as below
 ```
 
-<img alt="img_2.png" height="300" src="img_2.png" width="300"/>
+<img alt="img_2.png" height="300" src="assets/img_2.png" width="300"/>
 
 ```bash
 # 5.Now click on Run and build (Hammer symbol) on right of configuration and you are all set .

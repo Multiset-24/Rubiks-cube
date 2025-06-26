@@ -32,17 +32,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="38684ee6-07c1-4dca-b8e4-292fbe0e89db" name="Changes" comment="THis is to initial the rubiks cube project">
-      <change afterPath="$PROJECT_DIR$/img.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/img_1.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/img_2.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Clones/Advanced-Product-Catalog/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../Clones/Advanced-Product-Catalog/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Clones/CAD_TEST/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../Clones/CAD_TEST/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.C_Creating_Keys_for_StORages_Has_Become_My_Main_Skill.cpp_babea9c26b0914870ddb93081e1d5cd7.prob" beforeDir="false" afterPath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.C_Creating_Keys_for_StORages_Has_Become_My_Main_Skill.cpp_babea9c26b0914870ddb93081e1d5cd7.prob" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.Nested_Ranges_Count.cpp_580250091e85ffff5296892e7b52d638.prob" beforeDir="false" afterPath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.Nested_Ranges_Count.cpp_580250091e85ffff5296892e7b52d638.prob" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Model/RubiksCubeBitBoard.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Model/RubiksCubeBitBoard.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -154,7 +147,7 @@
       <workItem from="1750771296423" duration="2334000" />
       <workItem from="1750773669407" duration="56000" />
       <workItem from="1750773736093" duration="5837000" />
-      <workItem from="1750929674271" duration="15364000" />
+      <workItem from="1750929674271" duration="15699000" />
     </task>
     <task id="LOCAL-00001" summary="THis is to initial the rubiks cube project">
       <option name="closed" value="true" />
