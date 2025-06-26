@@ -20,7 +20,11 @@ private:
 
     //    DFS code to find the solution (helper function)
     bool dfs(int dep) {
-        if (rubiksCube.isSolved()) return true;
+        if (rubiksCube.isSolved()) {
+            // cout<<"YES"<<endl;
+            return true;
+        }
+        // else cout<<"NO"<<endl;
         if (dep > max_search_depth) return false;
         for (int i = 0; i < 18; i++) {
             rubiksCube.move(RubiksCube::MOVE(i));

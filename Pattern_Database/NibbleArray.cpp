@@ -6,11 +6,11 @@
 
 using namespace std;
 
-NibbleArr::NibbleArr(const size_t size, const uint8_t val) :
+NibbleArray::NibbleArray(const size_t size, const uint8_t val) :
         size(size), arr(size / 2 + 1, val) {
 }
 
-uint8_t NibbleArr::get(const size_t pos) const {
+uint8_t NibbleArray::get(const size_t pos) const {
     size_t i = pos / 2;
     assert(pos <= this->size);
     uint8_t val = this->arr.at(i);
@@ -25,7 +25,7 @@ uint8_t NibbleArr::get(const size_t pos) const {
     }
 }
 
-void NibbleArr::set(const size_t pos, const uint8_t val) {
+void NibbleArray::set(const size_t pos, const uint8_t val) {
     size_t i = pos / 2;
     uint8_t currVal = this->arr.at(i);
     assert(pos <= this->size);
@@ -40,22 +40,22 @@ void NibbleArr::set(const size_t pos, const uint8_t val) {
 
 //Get pointer to underlying array
 
-uint8_t *NibbleArr::data() {
+uint8_t *NibbleArray::data() {
     return this->arr.data();
 }
 
-const uint8_t *NibbleArr::data() const {
+const uint8_t *NibbleArray::data() const {
     return this->arr.data();
 }
 
-size_t NibbleArr::storageSize() const {
+size_t NibbleArray::storageSize() const {
     return this->arr.size();
 }
 
 // Move all the moves to a vector. This doubles the size, but is faster to access,
 // since there is no bitwise operation needed.
 
-void NibbleArr::inflate(vector<uint8_t> &dest) const {
+void NibbleArray::inflate(vector<uint8_t> &dest) const {
     dest.reserve(this->size);
 
     for (unsigned i = 0; i < this->size; ++i)
@@ -63,6 +63,6 @@ void NibbleArr::inflate(vector<uint8_t> &dest) const {
 }
 
 // Reset the array
-void NibbleArr::reset(const uint8_t val) {
+void NibbleArray::reset(const uint8_t val) {
     fill(this->arr.begin(), this->arr.end(), val);
 }

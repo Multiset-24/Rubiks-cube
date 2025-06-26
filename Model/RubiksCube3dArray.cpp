@@ -30,7 +30,15 @@ public:
             }
         }
     }
-
+    //constructor for passing the custom cube of out choice
+    RubiksCube3dArray(char other[6][3][3]) {
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 3; j++) {
+                for (int k = 0; k < 3; k++)
+                    cube[i][j][k] = other[i][j][k];
+            }
+        }
+    }
     COLOR getColor(FACE face, unsigned row, unsigned col) const override {
         char color = cube[int(face)][row][col];
         switch (color) {
@@ -51,9 +59,10 @@ public:
 
     bool isSolved() const override {
         for (int i = 0; i < 6; i++) {
+            char c=this->cube[i][0][0];
             for (int j = 0; j < 3; j++) {
                 for (int k = 0; k < 3; k++) {
-                    if (this->cube[i][j][k] == getColorLetter(COLOR(i))) continue;
+                    if (this->cube[i][j][k] == c) continue;
                     return false;
                 }
             }

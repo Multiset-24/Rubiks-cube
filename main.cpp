@@ -56,40 +56,39 @@ int main() {
     // testing for bfs solver
  char customCube[6][3][3] = {
   // UP face (0)
-  {{'W','W','O'},
+  {{'W','W','W'},
    {'W','W','W'},
-   {'B','B','W'}},
+   {'W','W','W'}},
   // LEFT face (1)
-  {{'Y','B','B'},
+  {{'O','O','O'},
    {'O','O','O'},
    {'O','O','O'}},
   // FRONT face (2)
-  {{'O','O','G'},
+  {{'G','G','G'},
    {'G','G','G'},
    {'G','G','G'}},
   // RIGHT face (3)
-  {{'W','R','R'},
-   {'G','R','R'},
-   {'G','R','R'}},
+  {{'R','R','R'},
+   {'R','R','R'},
+   {'R','R','R'}},
   // BACK face (4)
-  {{'W','R','R'},
-   {'W','B','B'},
+  {{'B','B','B'},
+   {'B','B','B'},
    {'B','B','B'}},
   // DOWN face (5)
-  {{'Y','Y','R'},
+  {{'Y','Y','Y'},
    {'Y','Y','Y'},
    {'Y','Y','Y'}}
  };
 
 
-    RubiksCube3dArray cube;
-    vector<RubiksCube3dArray::MOVE> moves=cube.randomShuffleCube(8);
+    RubiksCube3dArray cube(customCube);
+    vector<RubiksCube::MOVE>shuffled_moves=cube.randomShuffleCube(5);
     cube.print();
-    RubiksCube3dArray cube2=cube;
-    DFSSolver<RubiksCube3dArray,Hash3d>dfssolver(cube2);
-    vector<RubiksCube::MOVE>solve_moves=dfssolver.solve();
-    for (auto move:solve_moves)cout<<cube2.getMove(move)<<" ";
-    cube2.print();
+    IDAstarSolver<RubiksCube3dArray,Hash3d>idastarsolver(cube,"");
+    vector<RubiksCube::MOVE>solve_moves=idastarsolver.solve();
+    for (auto move:solve_moves)cout<<cube.getMove(move)<<" ";
+    idastarsolver.rubiksCube.print();
     cout<<"\n";
     return 0;
 }
