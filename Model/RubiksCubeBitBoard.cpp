@@ -87,7 +87,30 @@ public:
             solved_side_config[side] = bitboard[side];
         }
     }
-
+    RubiksCubeBitboard(const char cube[6][3][3]) {
+        uint64_t one = 1;
+        for (int side = 0; side < 6; side++) {
+            bitboard[side] = 0;
+            for (int row = 0; row < 3; row++) {
+                for (int col = 0; col < 3; col++) {
+                    int idx = arr[row][col];
+                    char ch = cube[side][row][col];
+                    int colorVal;
+                    switch (ch) {
+                        case 'W': colorVal = 0; break;  // WHITE
+                        case 'G': colorVal = 1; break;  // GREEN
+                        case 'R': colorVal = 2; break;  // RED
+                        case 'B': colorVal = 3; break;  // BLUE
+                        case 'O': colorVal = 4; break;  // ORANGE
+                        case 'Y': colorVal = 5; break;  // YELLOW as per enum color class
+                        default:  colorVal = 0;
+                    }
+                    bitboard[side] |= ( (one << colorVal) << (8 * idx) );
+                }
+            }
+            solved_side_config[side] = solved_side_config[side];
+        }
+    }
     COLOR getColor(FACE face, unsigned row, unsigned col) const override {
         int idx = arr[row][col];
         if (idx == 8) return (COLOR)((int) face);

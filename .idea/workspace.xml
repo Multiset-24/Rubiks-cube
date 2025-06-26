@@ -32,26 +32,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="38684ee6-07c1-4dca-b8e4-292fbe0e89db" name="Changes" comment="THis is to initial the rubiks cube project">
+      <change afterPath="$PROJECT_DIR$/img.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/img_1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/img_2.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Clones/Advanced-Product-Catalog/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../Clones/Advanced-Product-Catalog/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Clones/CAD_TEST/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../Clones/CAD_TEST/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.C_Creating_Keys_for_StORages_Has_Become_My_Main_Skill.cpp_babea9c26b0914870ddb93081e1d5cd7.prob" beforeDir="false" afterPath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.C_Creating_Keys_for_StORages_Has_Become_My_Main_Skill.cpp_babea9c26b0914870ddb93081e1d5cd7.prob" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.Nested_Ranges_Count.cpp_580250091e85ffff5296892e7b52d638.prob" beforeDir="false" afterPath="$PROJECT_DIR$/../Programming/Competitive-programming/.cph/.Nested_Ranges_Count.cpp_580250091e85ffff5296892e7b52d638.prob" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pattern_Database/CornerPatternDatabase.h" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/CornerPatternDatabase.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pattern_Database/PatternDatabase.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/PatternDatabase.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pattern_Database/PatternDatabase.h" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/PatternDatabase.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Pattern_Database/PermutationIndexer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Pattern_Database/PermutationIndexer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-e48cf673e00d496f7744.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/index-2025-06-26T11-13-44-0670.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/target-RubiksCube-Debug-83b14315c9e55039d633.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/RubiksCube.exe" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/RubiksCube.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Model/RubiksCubeBitBoard.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Model/RubiksCubeBitBoard.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/build.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/build.ninja" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -163,7 +154,7 @@
       <workItem from="1750771296423" duration="2334000" />
       <workItem from="1750773669407" duration="56000" />
       <workItem from="1750773736093" duration="5837000" />
-      <workItem from="1750929674271" duration="10937000" />
+      <workItem from="1750929674271" duration="15364000" />
     </task>
     <task id="LOCAL-00001" summary="THis is to initial the rubiks cube project">
       <option name="closed" value="true" />

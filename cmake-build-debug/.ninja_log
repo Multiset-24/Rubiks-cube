@@ -19,3 +19,10 @@
 17	2381	7726584264961161	CMakeFiles/RubiksCube.dir/Pattern_Database/CornerDBMaker.cpp.obj	b0a2181bba2f2968
 5	1666	7726585496262539	CMakeFiles/RubiksCube.dir/main.cpp.obj	61628484d5f26a33
 1667	1902	7726585512875584	RubiksCube.exe	c63863c62d0c4864
+17	4736	7726653926890163	CMakeFiles/RubiksCube.dir/Model/RubiksCubeBitBoard.cpp.obj	fd4319334f4ca02a
+34	5178	7726653927060299	CMakeFiles/RubiksCube.dir/Pattern_Database/CornerDBMaker.cpp.obj	b0a2181bba2f2968
+5179	6578	7726653978497478	RubiksCube.exe	c63863c62d0c4864
+32	4813	7726655979264257	CMakeFiles/RubiksCube.dir/Model/RubiksCubeBitBoard.cpp.obj	fd4319334f4ca02a
+43	5327	7726655979367787	CMakeFiles/RubiksCube.dir/Pattern_Database/CornerDBMaker.cpp.obj	b0a2181bba2f2968
+18	5893	7726655979124236	CMakeFiles/RubiksCube.dir/main.cpp.obj	61628484d5f26a33
+5893	6515	7726656037877429	RubiksCube.exe	c63863c62d0c4864
