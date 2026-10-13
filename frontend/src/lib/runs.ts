@@ -33,6 +33,19 @@ function invalid(e: unknown): boolean {
   return e instanceof ApiError && e.status === 400;
 }
 
+// Uploads one stored run. If the server refused only its time (a device clock
+// that runs fast), it is sent again without one and the server stamps it.
+async function upload(token: string, run: LocalRun) {
+  try {
+    await api.createRun(token, run);
+  } catch (e) {
+    if (!invalid(e)) throw e;
+    const fields = ((e as ApiError).details as { fields?: object } | undefined)?.fields ?? {};
+    if (Object.keys(fields).join() !== 'createdAtMs') throw e;
+    await api.createRun(token, { ...run, createdAtMs: undefined });
+  }
+}
+
 export async function saveRun(token: string | null, run: RunInput): Promise<'saved' | 'local' | 'rejected'> {
   const full = clamp({ ...run, clientId: run.clientId ?? uuid(), createdAtMs: run.createdAtMs ?? Date.now() });
   if (token) {
@@ -63,7 +76,7 @@ export async function syncGuestRuns(token: string): Promise<number> {
     // one at a time and drop only the ones the server rejects.
     for (const r of runs) {
       try {
-        await api.createRun(token, r);
+        await upload(token, r);
         imported++;
       } catch (err) {
         if (!invalid(err)) break;
