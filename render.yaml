@@ -4,7 +4,7 @@
 # JWT_SECRET for you.
 services:
   - type: web
-    name: zen-cube-api
+    name: zen-cube-solver-api
     runtime: docker
     plan: free
     region: singapore
