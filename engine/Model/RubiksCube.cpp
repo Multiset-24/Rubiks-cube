@@ -214,8 +214,7 @@ void RubiksCube::print() const {
 
 vector<RubiksCube::MOVE> RubiksCube::randomShuffleCube(unsigned int times) {
     vector<MOVE> moves_performed;
-    // A single, lazily seeded engine: re-seeding with srand(time(0)) on every call
-    // produced identical "random" scrambles for calls made within the same second.
+    // Seeded once; reseeding per call repeats scrambles within the same second.
     static std::mt19937 rng{std::random_device{}()};
     std::uniform_int_distribution<unsigned int> dist(0, 17);
     for (unsigned int i = 0; i < times; i++) {

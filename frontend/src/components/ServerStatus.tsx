@@ -3,9 +3,9 @@ import { onServerStatus, serverStatus, type ServerStatus as S } from '../lib/api
 
 const TEXT: Record<S, string> = {
   unknown: 'Connecting…',
-  waking: 'Waking the solver (free servers nap; ~1 min)',
-  online: 'Solver online',
-  offline: 'Solver offline',
+  waking: 'Server starting (up to a minute)',
+  online: 'Server online',
+  offline: 'Server unreachable',
 };
 
 export function ServerStatus() {

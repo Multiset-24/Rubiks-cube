@@ -5,7 +5,6 @@
 #include "CornerPatternDatabase.h"
 
 // 8! corner permutations * 3^7 orientations (the 8th corner's twist is implied).
-// Was 100179840, which wasted 12M entries (6 MB) of the table.
 CornerPatternDatabase::CornerPatternDatabase() : PatternDatabase(CornerPatternDatabase::kSize) {}
 
 CornerPatternDatabase::CornerPatternDatabase(uint8_t init_val) : PatternDatabase(CornerPatternDatabase::kSize, init_val) {}

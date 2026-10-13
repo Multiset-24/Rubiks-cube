@@ -35,3 +35,7 @@ if(ZENCUBE_BUILD_TESTS)
     include(GoogleTest)
     gtest_discover_tests(zencube_tests DISCOVERY_TIMEOUT 60 PROPERTIES TIMEOUT 300)
 endif()
+
+# ---------------------------------------------------------------- benchmarks
+add_executable(zencube_bench tools/bench.cpp)
+target_link_libraries(zencube_bench PRIVATE zencube_core)

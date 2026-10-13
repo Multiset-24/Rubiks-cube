@@ -143,8 +143,8 @@ export const API_BASE = resolveBase();
 
 // ---------------------------------------------------------------- server status
 
-// The free Render instance sleeps after 15 idle minutes and takes ~a minute to
-// wake. The UI shows this status instead of a mysterious spinner.
+// The free Render instance sleeps after 15 idle minutes and takes about a
+// minute to start again, so the UI shows the connection state.
 export type ServerStatus = 'unknown' | 'waking' | 'online' | 'offline';
 let status: ServerStatus = 'unknown';
 const listeners = new Set<(s: ServerStatus) => void>();

@@ -19,7 +19,7 @@ interface FlatStep {
   numberInStage: number;
 }
 
-const SPEEDS = { slow: 560, calm: 360, brisk: 200 } as const;
+const SPEEDS = { slow: 560, normal: 360, fast: 200 } as const;
 type Speed = keyof typeof SPEEDS;
 
 export default function Solve() {
@@ -67,7 +67,7 @@ export default function Solve() {
     );
   }
   if (!solution) {
-    return <Breath label={method === 'optimal' ? 'Searching for the shortest solution…' : 'Reading your cube…'} />;
+    return <Breath label={method === 'optimal' ? 'Searching for the shortest solution…' : 'Solving…'} />;
   }
   return <Player solution={solution} />;
 }
@@ -93,7 +93,7 @@ function Player({ solution }: { solution: Solution }) {
   const [done, setDone] = useState(0); // moves of step k already applied
   const [active, setActive] = useState(-1);
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState<Speed>('calm');
+  const [speed, setSpeed] = useState<Speed>('normal');
   const [quizMode, setQuizMode] = useState(solution.method === 'beginner');
   const [answers, setAnswers] = useState<Record<number, boolean>>({});
   const [zen, setZen] = useState(false);
@@ -247,14 +247,14 @@ function Player({ solution }: { solution: Solution }) {
             {solution.fallbackFrom && <p className="notice">{solution.fallbackReason}</p>}
             {finished ? (
               <div className="card done">
-                <p className="eyebrow">Solved</p>
-                <h2>Beautifully done.</h2>
+                <p className="eyebrow">Done</p>
+                <h2>Cube solved</h2>
                 <dl className="done__stats">
                   <div><dt>Time</dt><dd>{formatDuration(Date.now() - startedAt.current)}</dd></div>
                   <div><dt>Moves</dt><dd>{solution.moveCount}</dd></div>
                   {quiz.length > 0 && <div><dt>Patterns read</dt><dd>{quizCorrect}/{quiz.length}</dd></div>}
                 </dl>
-                <p className="muted">{token ? 'Saved to your progress.' : 'Saved on this device. Sign in to keep it.'}</p>
+                <p className="muted">{token ? 'Saved to your progress.' : 'Saved on this device. Sign in to sync it.'}</p>
                 <div className="row">
                   <Link className="btn btn--primary" to="/scan">Solve another</Link>
                   <Link className="btn btn--ghost" to="/timer">Try the timer</Link>
@@ -315,8 +315,8 @@ function Player({ solution }: { solution: Solution }) {
                     Speed
                     <select value={speed} onChange={(e) => setSpeed(e.target.value as Speed)}>
                       <option value="slow">Slow</option>
-                      <option value="calm">Calm</option>
-                      <option value="brisk">Brisk</option>
+                      <option value="normal">Normal</option>
+                      <option value="fast">Fast</option>
                     </select>
                   </label>
                   {solution.method === 'beginner' && (

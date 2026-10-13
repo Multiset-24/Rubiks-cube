@@ -34,8 +34,7 @@ bool CornerDBMaker::bfsAndStore(int maxDepth) {
                 node.move(curr_move);
                 if ((int) cornerDB.getNumMoves(node) > curr_depth) {
                     cornerDB.setNumMoves(node, curr_depth);
-                    // The last level is recorded but never expanded, so it does not
-                    // need to sit in the queue (it is the largest level by far).
+                    // The last level is never expanded, so don't queue it.
                     if (curr_depth < maxDepth) q.push(node);
                 }
                 node.invert(curr_move);
@@ -43,9 +42,7 @@ bool CornerDBMaker::bfsAndStore(int maxDepth) {
         }
     }
 
-    // Previously unreached entries kept the 0xF initial value, i.e. a heuristic of
-    // 15 moves for states that are at most 11 away: an over-estimate that made
-    // IDA* return non-optimal solutions.
+    // Unreached states are at least curr_depth + 1 moves away.
     cornerDB.fillUnset(static_cast<uint8_t>(curr_depth + 1));
 
     cornerDB.toFile(fileName);

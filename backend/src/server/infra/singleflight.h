@@ -8,10 +8,9 @@
 
 namespace zc::server {
 
-// Request coalescing ("singleflight", as in Go's x/sync): concurrent callers
-// asking for the same key share one computation instead of each burning CPU.
-// Useful when many clients solve the same state at once (e.g. a shared
-// scramble) and a cache miss would otherwise stampede the solver.
+// Concurrent callers asking for the same key share one computation (like Go's
+// x/sync/singleflight). Used so identical solve requests that miss the cache at
+// the same time run the solver once.
 template<typename V>
 class SingleFlight {
 public:

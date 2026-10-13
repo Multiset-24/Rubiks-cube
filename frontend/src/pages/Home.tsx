@@ -29,17 +29,17 @@ export function Home() {
     <div className="home">
       <section className="hero">
         <div className="hero__breath" aria-hidden />
-        <p className="eyebrow">A calm Rubik’s Cube tutor</p>
-        <h1>Solve your cube,<br />one quiet step at a time.</h1>
+        <p className="eyebrow">Rubik’s Cube tutor</p>
+        <h1>Scan your cube.<br />Learn to solve it.</h1>
         <p className="lede">
-          Show your cube to the camera. Zen Cube reads it, then teaches you the beginner method: what to look for,
-          why each move works, and how to spot the patterns yourself.
+          Point your camera at each face. Zen Cube reads the colours and walks you through the beginner
+          method one step at a time, showing which piece to look at and why each move works.
         </p>
         <div className="hero__actions">
           <Link to="/scan" className="btn btn--primary btn--lg">Scan my cube</Link>
           <Link to="/review?manual=1" className="btn btn--ghost btn--lg">Enter colours by hand</Link>
           <button type="button" className="btn btn--quiet btn--lg" onClick={tryScrambled} disabled={busy}>
-            {busy ? 'Mixing…' : 'Try a scrambled cube'}
+            {busy ? 'Loading…' : 'Try a random cube'}
           </button>
         </div>
       </section>
@@ -48,26 +48,26 @@ export function Home() {
         <article className="card feature">
           <span className="feature__num">1</span>
           <h3>Scan</h3>
-          <p>Hold each face up to your camera. Colours are matched against your cube’s own centres, so lighting matters less.</p>
+          <p>Hold each face up to the camera. Stickers are matched against your cube’s own centre colours, which copes better with bad lighting.</p>
         </article>
         <article className="card feature">
           <span className="feature__num">2</span>
-          <h3>Learn the patterns</h3>
-          <p>Nine stages, from the daisy to the last corner. Before each move, a gentle question asks you to read the cube first.</p>
+          <h3>Learn</h3>
+          <p>Nine stages, from the daisy to the last corner. Optional quiz questions ask you to read the cube before the moves are shown.</p>
         </article>
         <article className="card feature">
           <span className="feature__num">3</span>
-          <h3>Grow</h3>
-          <p>Time your solves with WCA scrambles, track averages and streaks, and see how you improve.</p>
+          <h3>Practise</h3>
+          <p>Time solves with WCA-style scrambles and track your best, Ao5, Ao12 and daily streak.</p>
         </article>
       </section>
 
       <section className="modes card">
         <h2>Three ways to solve</h2>
         <div className="modes__grid">
-          <div><h4>Learn</h4><p>The layer-by-layer method with explanations and quizzes. About 100–180 moves, every one understood.</p></div>
-          <div><h4>Fast</h4><p>Kociemba’s two-phase algorithm finds about 20 moves for any cube in milliseconds.</p></div>
-          <div><h4>Optimal</h4><p>IDA* with a corner pattern database: the shortest possible solution for lightly mixed cubes.</p></div>
+          <div><h4>Learn</h4><p>Layer-by-layer method with explanations and quizzes. Around 160 moves.</p></div>
+          <div><h4>Fast</h4><p>Kociemba’s two-phase algorithm: about 21 moves for any cube.</p></div>
+          <div><h4>Optimal</h4><p>IDA* with a corner pattern database. Shortest solution, for cubes up to about 9 moves from solved.</p></div>
         </div>
       </section>
     </div>

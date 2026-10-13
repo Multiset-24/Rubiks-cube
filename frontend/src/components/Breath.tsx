@@ -1,4 +1,4 @@
-// A slow breathing circle: the loading state, and a small invitation to relax.
+// Loading indicator: a slowly pulsing circle.
 export function Breath({ label }: { label?: string }) {
   return (
     <div className="breath" role="status" aria-live="polite">

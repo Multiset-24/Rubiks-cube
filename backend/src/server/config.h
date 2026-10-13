@@ -7,8 +7,8 @@
 
 namespace zc::server {
 
-// All runtime configuration comes from environment variables (12-factor), so the
-// same image runs locally, in CI and on Render with different settings.
+// Runtime configuration, read from environment variables so the same image
+// runs locally, in CI and on Render.
 struct Config {
     std::string host = "0.0.0.0";
     int port = 8080;                     // PORT

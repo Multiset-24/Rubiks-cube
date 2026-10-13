@@ -8,8 +8,8 @@
 
 namespace zc::server {
 
-// Builds everything that needs warm-up and returns the wired services
-// (composition root: the only place that knows concrete implementations).
+// Builds the services (solver tables, pattern database, storage). This is the
+// only place that chooses concrete implementations.
 std::shared_ptr<Services> buildServices(const Config &config, const std::atomic<bool> *shutdown);
 
 // Precomputes data files (corner pattern database) into config.dataDir.

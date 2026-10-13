@@ -17,8 +17,7 @@
 
 namespace zc::server {
 
-// Strategy pattern: every solving method implements the same interface, so new
-// methods plug in without touching the HTTP layer (open/closed principle).
+// One implementation per solving method; SolveService picks one by name.
 class SolverStrategy {
 public:
     virtual ~SolverStrategy() = default;

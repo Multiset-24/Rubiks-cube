@@ -10,9 +10,7 @@
 class RubiksCubeBitboard : public RubiksCube {
 
 private:
-    // These used to be per-instance members, which made every cube ~160 bytes and
-    // the BFS queue in CornerDBMaker run out of memory. They are constants, so they
-    // are now static: a cube is just its vtable pointer + 6 * 64-bit faces.
+    // Shared constants (static so each cube object stays small for BFS queues).
     static constexpr int arr[3][3] = {{0, 1, 2},
                                       {7, 8, 3},
                                       {6, 5, 4}};
@@ -94,12 +92,7 @@ public:
 
     // Build a cube from a [face][row][col] array of colour letters (W G R B O Y),
     // faces ordered UP, LEFT, FRONT, RIGHT, BACK, DOWN as in RubiksCube::FACE.
-    //
-    // Fixed two bugs in the original constructor:
-    //  * `solved_side_config[side] = solved_side_config[side]` never initialised the
-    //    solved state, so isSolved() could never return true for a custom cube.
-    //  * the centre sticker (idx 8) was shifted by 8 * 8 = 64 bits, which is undefined
-    //    behaviour for a 64-bit integer. Centres are implicit in this model.
+    // Centres are implicit in this model, so cube[f][1][1] is ignored.
     explicit RubiksCubeBitboard(const char cube[6][3][3]) {
         for (int side = 0; side < 6; side++) {
             bitboard[side] = 0;
@@ -245,10 +238,7 @@ public:
 
         this->rotateSide(0, 2, 3, 4, 2, 2, 3, 4);
         this->rotateSide(2, 2, 3, 4, 5, 2, 3, 4);
-        // Fixed: the back face's left column runs bottom-to-top as indices 6, 7, 0, so
-        // D(0,2) <- B(2,0) (idx 6) and B(2,0) <- U(0,2). The original used 7, 6, 0,
-        // which swapped two stickers on D and B. Invisible on a solved cube (the
-        // column is one colour), so R looked right in every single-move test.
+        // B's left column is indices 0 (top), 7, 6 (bottom).
         this->rotateSide(5, 2, 3, 4, 4, 6, 7, 0);
 
         bitboard[4] = (bitboard[4] & ~(one_8 << (8 * 6))) | (clr1 << (8 * 6));

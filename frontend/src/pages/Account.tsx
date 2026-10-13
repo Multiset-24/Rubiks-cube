@@ -88,9 +88,9 @@ function AuthForm() {
         </label>
         {error && <p className="error">{error}</p>}
         <button type="submit" className="btn btn--primary btn--lg btn--block" disabled={busy}>
-          {busy ? 'One moment…' : mode === 'login' ? 'Sign in' : 'Create account'}
+          {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
         </button>
-        <p className="muted small">No account needed to solve: everything works as a guest.</p>
+        <p className="muted small">You can use everything without an account.</p>
       </form>
     </div>
   );

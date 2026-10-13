@@ -40,7 +40,7 @@ function AccountHistory({ token }: { token: string }) {
     api.stats(token).then(setStats).catch(() => undefined);
   };
 
-  if (loading) return <Breath label="Gathering your progress…" />;
+  if (loading) return <Breath label="Loading…" />;
   if (error) return <div className="empty card"><p>{error}</p></div>;
 
   const tutor = stats?.byKind.tutor;
@@ -48,7 +48,7 @@ function AccountHistory({ token }: { token: string }) {
     <div className="history">
       <header className="page-head">
         <h1>Your progress</h1>
-        <p className="muted">Every tutor session and timed solve, kept in one place.</p>
+        <p className="muted">Tutor sessions and timed solves.</p>
       </header>
 
       {stats && (
@@ -102,10 +102,10 @@ function GuestHistory() {
     <div className="history">
       <header className="page-head">
         <h1>Your progress</h1>
-        <p className="muted">You’re not signed in, so runs are kept on this device only.</p>
+        <p className="muted">You’re not signed in, so these are stored in this browser only.</p>
       </header>
       <div className="card banner">
-        <p>Create a free account to keep your history, averages and streaks across devices. Runs from this device come with you.</p>
+        <p>Sign in to keep your history, averages and streaks across devices. Anything saved here is copied to your account.</p>
         <Link to="/account" className="btn btn--primary">Sign in or register</Link>
       </div>
       <div className="card">

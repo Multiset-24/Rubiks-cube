@@ -71,8 +71,6 @@ public:
         }
     }
 
-    // Fixed: the reference colour used to be taken per *row* (cube[getIndex(i, j, 0)]),
-    // so a face whose rows were different uniform colours was reported as solved.
     // Every sticker of a face must match that face's centre.
     bool isSolved() const override {
         for (int i = 0; i < 6; i++) {

@@ -1,5 +1,5 @@
-// Anti-corruption layer for the original engine: its headers use
-// `using namespace std` and their own types, so they are only included here.
+// The engine headers put `using namespace std` in scope, so they are only
+// included in this file.
 #include "core/optimal.h"
 
 #include <chrono>

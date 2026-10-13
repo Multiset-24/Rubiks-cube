@@ -121,7 +121,7 @@ export default function Scan() {
         <div className="scan__camera card">
           {!stream ? (
             <div className="scan__start">
-              <p>Your video stays on your device. Only the 54 colours are sent to the solver.</p>
+              <p>The video is processed in your browser. Only the 54 sticker colours are sent to the server.</p>
               <button type="button" className="btn btn--primary btn--lg" onClick={() => start('environment')}>
                 Turn on camera
               </button>
@@ -170,7 +170,7 @@ export default function Scan() {
               {wrongCentre && stream && (
                 <p className="warn">That centre looks {centreGuess}. Expected {current.centre}. Check the face, or capture anyway if your cube’s colours differ.</p>
               )}
-              <p className="muted small">Tip: soft daylight works best. Press Space to capture.</p>
+              <p className="muted small">Even daylight works best; avoid glare. Press Space to capture.</p>
             </div>
           ) : (
             <div className="card scan__step">

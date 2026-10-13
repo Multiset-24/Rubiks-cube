@@ -7,10 +7,9 @@
 
 namespace zc::server {
 
-// Bulkhead: caps how many expensive operations of one kind run at once, so a
-// burst of slow optimal solves cannot starve cheap requests. Callers that
-// cannot get a slot within the queue timeout are rejected (HTTP 503 +
-// Retry-After) instead of piling up: load shedding / back-pressure.
+// Limits how many operations of one kind run at once, so slow optimal solves
+// can't use up every worker. A caller that can't get a slot within the wait
+// time is rejected (the API answers 503 with Retry-After) instead of queueing.
 class Bulkhead {
 public:
     Bulkhead(std::string name, int capacity) : name_(std::move(name)), capacity_(capacity) {}

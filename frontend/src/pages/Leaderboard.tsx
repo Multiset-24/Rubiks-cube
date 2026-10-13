@@ -16,7 +16,7 @@ export default function Leaderboard() {
     <div className="leaderboard">
       <header className="page-head">
         <h1>Leaderboard</h1>
-        <p className="muted">Best single solve per person, from the timer. Kind words only; everyone started somewhere.</p>
+        <p className="muted">Best single timer solve per person.</p>
       </header>
       {error && <div className="empty card"><p>{error}</p></div>}
       {!entries && !error && <Breath />}

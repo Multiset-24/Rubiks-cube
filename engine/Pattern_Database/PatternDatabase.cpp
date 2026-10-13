@@ -78,8 +78,7 @@ void PatternDatabase::toFile(const string &filePath) const {
 // else return false
 
 bool PatternDatabase::fromFile(const string &filePath) {
-    // Opened in binary mode: in text mode Windows translates "\r\n" and corrupts
-    // the nibble data.
+    // Binary mode, or Windows would translate line endings in the data.
     ifstream reader(filePath, ios::in | ios::binary | ios::ate);
 
     if(!reader.is_open())

@@ -301,8 +301,8 @@ SolveResponse SolveService::solve(const SolveRequest &req) {
             return body;
         } catch (const SolverBudgetExceeded &) {
             if (strategy.id() == "optimal") {
-                // Graceful degradation: the optimal search is exponential in depth,
-                // so for deep scrambles return a near-optimal answer instead of an error.
+                // Optimal search time grows exponentially with depth; for deep
+                // scrambles return a near-optimal answer instead of an error.
                 Metrics::instance().inc("solver_fallbacks_total", {{"from", "optimal"}, {"to", "kociemba"}});
                 json body = runStrategy(*strategies_.at("kociemba"), fc, *v.cubie, req.names);
                 body["fallbackFrom"] = "optimal";

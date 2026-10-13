@@ -275,8 +275,8 @@ class CubeEngine {
           c.group.quaternion.identity();
         });
         this.root.remove(pivot);
-        // The animation ends exactly where the permuted colours put each
-        // sticker, so snapping back and repainting is seamless.
+        // The rotation ends where the permuted colours put each sticker, so
+        // resetting the cubies and repainting shows the same picture.
         this.state = applyMove(this.state, move);
         this.highlight = trackStickers(this.highlight, move);
         this.paint();

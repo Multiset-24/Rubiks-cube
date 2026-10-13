@@ -17,20 +17,13 @@
 #include "../Pattern_Database/CornerPatternDatabase.h"
 
 /*
- * IDA* (Iterative Deepening A*) as described by Korf (1997), using the corner
- * pattern database as an admissible heuristic.
- *
- * The previous version was a best-first search: a priority queue plus `visited`
- * and `move_done` hash maps holding every generated state. That is A* with a
- * bound, and its memory grows as O(b^d), exactly what IDA* is meant to avoid.
- * This version is a true depth-first search bounded by f = g + h, so memory is
- * O(d), and it adds the standard move pruning:
- *   - never turn the same face twice in a row (R R == R2),
- *   - for opposite faces, only allow one order (L R == R L).
- * That cuts the branching factor from 18 to about 13.35.
+ * IDA* (Korf 1997): depth-first search bounded by f = g + h, with the corner
+ * pattern database as h. Memory is O(depth). Two pruning rules cut the
+ * branching factor from 18 to about 13.35: never turn the same face twice in a
+ * row, and turn opposite faces in one fixed order only.
  *
  * Typename T: RubiksCube representation (3d, 1d, Bitboard)
- * Typename H: corresponding hash function (kept for API compatibility)
+ * Typename H: corresponding hash function (unused, kept for API compatibility)
  */
 template<typename T, typename H>
 class IDAstarSolver {
@@ -60,8 +53,7 @@ private:
     static constexpr int INF = std::numeric_limits<int>::max();
 
     int heuristic(const T &cube) const {
-        // Without a database, fall back to h = 0 (plain iterative deepening) instead of
-        // the 0xF "unset" value, which would over-estimate every state.
+        // No database: h = 0, i.e. plain iterative deepening.
         return heuristicLoaded ? cornerDB->getNumMoves(cube) : 0;
     }
 
@@ -126,8 +118,7 @@ public:
         cornerDB = db;
     }
 
-    // Share one in-memory database across many solves (the backend does this: the
-    // table is 44 MB and is loaded once at start-up).
+    // Shares one loaded database between solves (it is 44 MB).
     IDAstarSolver(T _rubiksCube, std::shared_ptr<const CornerPatternDatabase> db)
             : cornerDB(std::move(db)), rubiksCube(_rubiksCube) {
         heuristicLoaded = cornerDB != nullptr;

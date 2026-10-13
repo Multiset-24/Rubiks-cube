@@ -130,7 +130,7 @@ export default function Review() {
           <div className="card">
             {checking && <p className="muted">Checking your cube…</p>}
             {offline && <p className="warn">Can’t reach the solver right now. It may be waking up; try again in a moment.</p>}
-            {valid && <p className="ok">Looks like a real cube. Ready when you are.</p>}
+            {valid && <p className="ok">This is a valid cube.</p>}
             {issues.length > 0 && (
               <ul className="issues">
                 {issues.map((i, k) => (

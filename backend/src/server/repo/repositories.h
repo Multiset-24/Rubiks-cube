@@ -21,8 +21,8 @@ struct StorageUnavailable : std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 
-// Ports (hexagonal architecture): services depend on these interfaces; the
-// adapters are an in-memory store (dev/tests) and PostgreSQL (production).
+// Storage interfaces used by the services. Implementations: in-memory (local
+// dev and tests) and PostgreSQL.
 class UserRepository {
 public:
     virtual ~UserRepository() = default;

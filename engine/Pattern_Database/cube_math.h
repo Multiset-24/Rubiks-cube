@@ -2,8 +2,7 @@
 // Created by Saurav on 24-06-2025.
 //
 
-// Renamed from math.h: with this directory on the include path, a header called
-// "math.h" shadowed the C library <math.h> that <cmath> pulls in.
+// Not called math.h, which would shadow the C library header.
 #ifndef RUBIKS_CUBE_SOLVER_CUBE_MATH_H
 #define RUBIKS_CUBE_SOLVER_CUBE_MATH_H
 

@@ -6,14 +6,14 @@ interface Props {
   onAnswered: (correct: boolean) => void;
 }
 
-// Asks the learner to read the cube before revealing the moves: recognising the
-// pattern is the skill; the algorithm is just muscle memory.
+// Shown before a step's moves when quizzes are on: the learner has to read the
+// cube (which pattern, how many repeats) before seeing the answer.
 export function Quiz({ quiz, onAnswered }: Props) {
   const [picked, setPicked] = useState<number | null>(null);
   const answered = picked !== null;
   return (
     <div className="quiz">
-      <p className="quiz__label">Look first</p>
+      <p className="quiz__label">Quick check</p>
       <p className="quiz__question">{quiz.question}</p>
       <div className="quiz__options">
         {quiz.options.map((o, i) => {
@@ -33,7 +33,7 @@ export function Quiz({ quiz, onAnswered }: Props) {
       </div>
       {answered && (
         <div className="quiz__feedback">
-          <p>{picked === quiz.answer ? 'Exactly right.' : `Not quite: it's “${quiz.options[quiz.answer]}”.`} {quiz.explanation}</p>
+          <p>{picked === quiz.answer ? 'Correct.' : `The answer is “${quiz.options[quiz.answer]}”.`} {quiz.explanation}</p>
           <button type="button" className="btn btn--primary" onClick={() => onAnswered(picked === quiz.answer)}>
             Show me the moves
           </button>

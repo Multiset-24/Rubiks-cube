@@ -3,7 +3,7 @@ import { FACES, type Face } from './cube';
 export const COLOR_NAMES = ['white', 'yellow', 'red', 'orange', 'green', 'blue'] as const;
 export type ColorName = (typeof COLOR_NAMES)[number];
 
-// Display colours: slightly muted for a calm look, still easy to tell apart.
+// Display colours used everywhere in the UI.
 export const PALETTE: Record<ColorName, string> = {
   white: '#f4f1ea',
   yellow: '#f3c623',

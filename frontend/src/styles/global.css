@@ -1,4 +1,4 @@
-/* Zen Cube: paper and ink, a sage accent, generous space, slow motion. */
+/* Zen Cube styles. Colour tokens first; dark mode overrides them. */
 
 :root {
   --bg: #f4f1ea;
@@ -284,7 +284,7 @@ input[type='checkbox'] { accent-color: var(--accent); width: 1em; height: 1em; p
 .quiz__opt--wrong { background: color-mix(in srgb, var(--error) 14%, var(--surface)); border-color: var(--error); }
 .quiz__feedback { margin-top: 12px; }
 
-/* zen mode: only the cube, the next move and your breath */
+/* zen mode: full-screen cube with only the next move shown */
 .solve--zen .solve__layout { display: block; }
 .solve--zen .solve__stage {
   position: fixed; inset: 0; z-index: 60; top: 0;
