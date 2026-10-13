@@ -18,12 +18,20 @@ PgPool::~PgPool() {
 }
 
 PGconn *PgPool::connect() {
-    PGconn *c = PQconnectdb(url_.c_str());
+    // Without these, a connect to an unreachable host or a query on a dead TCP
+    // connection can block a worker thread for minutes. Values given after
+    // "dbname" override the same settings in the URL.
+    const char *keys[] = {"dbname", "connect_timeout", "keepalives", "keepalives_idle", "keepalives_interval",
+                          "keepalives_count", "tcp_user_timeout", nullptr};
+    const char *values[] = {url_.c_str(), "5", "1", "30", "10", "3", "15000", nullptr};
+    PGconn *c = PQconnectdbParams(keys, values, /*expand_dbname=*/1);
     if (PQstatus(c) != CONNECTION_OK) {
         std::string err = PQerrorMessage(c);
         PQfinish(c);
-        throw StorageUnavailable("cannot connect to database: " + err);
+        throw StorageUnavailable("cannot connect to database: " + redactSecrets(err, url_));
     }
+    PGresult *r = PQexec(c, "SET statement_timeout = '10s'");
+    PQclear(r);
     return c;
 }
 
@@ -55,6 +63,7 @@ PgPool::Lease PgPool::acquire(std::chrono::milliseconds timeout) {
     if (PQstatus(c) != CONNECTION_OK) {
         log().warn("resetting broken database connection");
         PQreset(c);
+        PQclear(PQexec(c, "SET statement_timeout = '10s'"));
     }
     return Lease(this, c);
 }
@@ -90,7 +99,8 @@ PgResult PgPool::execOn(PGconn *conn, const std::string &sql, const std::vector<
     PQclear(r);
     Metrics::instance().inc("db_errors_total", {{"sqlstate", sqlstate.empty() ? "none" : sqlstate}});
     if (sqlstate == "23505") throw DuplicateError(err);
-    if (PQstatus(conn) != CONNECTION_OK) throw StorageUnavailable(err);
+    if (sqlstate == "57014") throw StorageUnavailable("query timed out");  // statement_timeout
+    if (PQstatus(conn) != CONNECTION_OK) throw StorageUnavailable(redactSecrets(err, url_));
     throw std::runtime_error("database error: " + err);
 }
 
@@ -102,6 +112,7 @@ PgResult PgPool::exec(const std::string &sql, const std::vector<std::optional<st
         // One retry on a fresh connection covers dropped idle connections
         // (common with serverless Postgres that suspends when idle).
         PQreset(lease.get());
+        PQclear(PQexec(lease.get(), "SET statement_timeout = '10s'"));
         return execOn(lease.get(), sql, params);
     }
 }

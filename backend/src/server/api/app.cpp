@@ -1,6 +1,7 @@
 #include "server/api/app.h"
 
 #include <regex>
+#include <set>
 
 #include "server/infra/crypto.h"
 #include "server/infra/logger.h"
@@ -80,7 +81,8 @@ bool validRequestId(const std::string &id) {
 App::App(const Config &config, std::atomic<bool> *shutdown)
         : config_(config), shutdown_(shutdown), globalLimiter_(config.rateLimitRps, config.rateLimitBurst),
           solveLimiter_(config.solveRateRps, config.solveRateBurst),
-          authLimiter_(config.authRatePerMinute / 60.0, config.authRatePerMinute) {
+          authLimiter_(config.authRatePerMinute / 60.0, config.authRatePerMinute),
+          runWriteLimiter_(config.runWritesPerMinute / 60.0, config.runWritesPerMinute) {
     auto &m = Metrics::instance();
     m.describe("http_requests_total", "counter", "HTTP requests by route template, method and status.");
     m.describe("http_request_duration_seconds", "histogram", "HTTP request latency by route template.");
@@ -92,9 +94,14 @@ App::App(const Config &config, std::atomic<bool> *shutdown)
     m.set("app_info", 1, {{"version", config.version}});
 }
 
-void App::setServices(std::shared_ptr<Services> s) {
+void App::setSolver(std::shared_ptr<SolveService> s) {
     std::lock_guard<std::mutex> lock(servicesMu_);
-    services_ = std::move(s);
+    solver_ = std::move(s);
+}
+
+void App::setAccounts(std::shared_ptr<AccountServices> a) {
+    std::lock_guard<std::mutex> lock(servicesMu_);
+    accounts_ = std::move(a);
 }
 
 void App::setStartupError(const std::string &error) {
@@ -104,28 +111,47 @@ void App::setStartupError(const std::string &error) {
 
 bool App::ready() const {
     std::lock_guard<std::mutex> lock(servicesMu_);
-    return services_ != nullptr;
+    return solver_ != nullptr;
 }
 
-std::shared_ptr<Services> App::services() const {
+std::shared_ptr<SolveService> App::solver() const {
     std::lock_guard<std::mutex> lock(servicesMu_);
-    if (!services_) {
+    if (!solver_) {
         throw ApiError(503, "WARMING_UP", "The server is starting up. Please retry in a few seconds.", nullptr, 3);
     }
-    return services_;
+    return solver_;
+}
+
+std::shared_ptr<AccountServices> App::accounts() const {
+    std::lock_guard<std::mutex> lock(servicesMu_);
+    if (!accounts_) {
+        throw ApiError(503, "STORAGE_UNAVAILABLE",
+                       "Accounts are temporarily unavailable. Solving still works; your runs are kept on this device.",
+                       nullptr, 10);
+    }
+    return accounts_;
 }
 
 std::string App::clientIp(const httplib::Request &req) const {
-    if (config_.trustProxy) {
-        // Behind Render's load balancer the original client is the first X-Forwarded-For entry.
-        std::string xff = req.get_header_value("X-Forwarded-For");
-        if (!xff.empty()) {
-            std::string first = xff.substr(0, xff.find(','));
-            size_t a = first.find_first_not_of(' '), b = first.find_last_not_of(' ');
-            if (a != std::string::npos) return first.substr(a, b - a + 1);
-        }
+    if (config_.trustedProxyHops <= 0) return req.remote_addr;
+    // Each proxy appends the address it received the request from, so only the
+    // last `hops` entries are trustworthy; anything to their left came from the
+    // client and could be forged to dodge rate limits.
+    std::vector<std::string> entries;
+    std::string xff = req.get_header_value("X-Forwarded-For");
+    size_t start = 0;
+    while (start <= xff.size()) {
+        size_t comma = xff.find(',', start);
+        std::string item = xff.substr(start, comma == std::string::npos ? std::string::npos : comma - start);
+        size_t a = item.find_first_not_of(" \t"), b = item.find_last_not_of(" \t");
+        if (a != std::string::npos) entries.push_back(item.substr(a, b - a + 1));
+        if (comma == std::string::npos) break;
+        start = comma + 1;
     }
-    return req.remote_addr;
+    if (entries.empty()) return req.remote_addr;
+    size_t hops = static_cast<size_t>(config_.trustedProxyHops);
+    std::string ip = entries.size() >= hops ? entries[entries.size() - hops] : entries.front();
+    return ip.size() <= 64 ? ip : req.remote_addr;
 }
 
 bool App::originAllowed(const std::string &origin) const {
@@ -145,6 +171,15 @@ bool App::originAllowed(const std::string &origin) const {
     return false;
 }
 
+void App::limitUser(int64_t userId) {
+    auto d = runWriteLimiter_.acquire("u:" + std::to_string(userId));
+    if (!d.allowed) {
+        Metrics::instance().inc("rate_limited_total", {{"pool", "run_writes"}});
+        throw ApiError(429, "RATE_LIMITED", "Too many saves in a short time. Please slow down.", nullptr,
+                       static_cast<int>(d.retryAfterSeconds) + 1);
+    }
+}
+
 void App::limit(RateLimiter &limiter, const httplib::Request &req, const char *pool) {
     auto d = limiter.acquire(clientIp(req));
     if (!d.allowed) {
@@ -155,13 +190,18 @@ void App::limit(RateLimiter &limiter, const httplib::Request &req, const char *p
 }
 
 int64_t App::requireUser(const httplib::Request &req) const {
-    return services()->auth->authenticate(req.get_header_value("Authorization"));
+    return accounts()->auth->authenticate(req.get_header_value("Authorization"));
 }
 
 App::Handler App::wrap(const std::string &pattern, Handler h) {
-    return [pattern, h](const httplib::Request &req, httplib::Response &res) {
+    bool probe = pattern == "/healthz" || pattern == "/readyz" || pattern == "/metrics";
+    return [this, pattern, h, probe](const httplib::Request &req, httplib::Response &res) {
         tlsCtx.route = pattern;
         try {
+            // The global limit is checked here rather than before routing: by now
+            // httplib has read the request body, so answering early can't leave
+            // body bytes on the connection to be parsed as another request.
+            if (!probe) limit(globalLimiter_, req, "global");
             h(req, res);
         } catch (const ApiError &e) {
             sendError(res, e.status, e.code, e.what(), e.details, e.retryAfterSeconds);
@@ -189,7 +229,7 @@ void App::handleSolve(const httplib::Request &req, httplib::Response &res, const
     sr.cube = requireString(body, "cube", 200);
     if (body.contains("method")) sr.method = requireString(body, "method", 32);
     sr.names = parseColorNames(body);
-    auto out = services()->solve->solve(sr);
+    auto out = solver()->solve(sr);
     res.set_header("X-Cache", out.cacheHit ? "HIT" : (out.coalesced ? "COALESCED" : "MISS"));
     sendJson(res, 200, out.body);
 }
@@ -222,21 +262,20 @@ void App::attach(httplib::Server &server) {
             res.status = 204;
             return httplib::Server::HandlerResponse::Handled;
         }
-        bool infra = req.path == "/healthz" || req.path == "/readyz" || req.path == "/metrics";
-        if (!infra) {
-            auto d = globalLimiter_.acquire(tlsCtx.ip);
-            if (!d.allowed) {
-                tlsCtx.route = "rate_limited";
-                Metrics::instance().inc("rate_limited_total", {{"pool", "global"}});
-                sendError(res, 429, "RATE_LIMITED", "Too many requests. Slow down a little.", nullptr,
-                          static_cast<int>(d.retryAfterSeconds) + 1);
-                return httplib::Server::HandlerResponse::Handled;
-            }
-        }
         return httplib::Server::HandlerResponse::Unhandled;
     });
 
-    server.set_error_handler([](const httplib::Request &, httplib::Response &res) {
+    server.set_error_handler([](const httplib::Request &req, httplib::Response &res) {
+        if (tlsCtx.requestId.empty()) {
+            // httplib rejected the request before routing (bad request line,
+            // URI too long, bad Range...), so the pre-routing handler never ran.
+            tlsCtx.start = std::chrono::steady_clock::now();
+            tlsCtx.requestId = crypto::randomHex(8);
+            tlsCtx.route = "rejected";
+            tlsCtx.ip = req.remote_addr;
+            res.set_header("X-Request-Id", tlsCtx.requestId);
+            res.set_header("X-Content-Type-Options", "nosniff");
+        }
         if (!res.body.empty()) return httplib::Server::HandlerResponse::Unhandled;
         if (res.status == 404) sendError(res, 404, "NOT_FOUND", "No such endpoint.");
         else if (res.status == 413) sendError(res, 413, "PAYLOAD_TOO_LARGE", "Request body is too large.");
@@ -251,16 +290,23 @@ void App::attach(httplib::Server &server) {
 
     server.set_logger([](const httplib::Request &req, const httplib::Response &res) {
         double secs = std::chrono::duration<double>(std::chrono::steady_clock::now() - tlsCtx.start).count();
+        // Metric labels must stay a small fixed set: raw methods from malformed
+        // requests would otherwise create a new series per request.
+        static const std::set<std::string> kMethods = {"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"};
+        const std::string method = kMethods.count(req.method) ? req.method : "OTHER";
         auto &m = Metrics::instance();
-        m.inc("http_requests_total", {{"route", tlsCtx.route}, {"method", req.method}, {"status", std::to_string(res.status)}});
+        m.inc("http_requests_total", {{"route", tlsCtx.route}, {"method", method}, {"status", std::to_string(res.status)}});
         m.observe("http_request_duration_seconds", secs, {{"route", tlsCtx.route}});
-        if (tlsCtx.route == "/healthz" || tlsCtx.route == "/metrics") return;  // keep logs quiet
-        json fields = {{"request_id", tlsCtx.requestId}, {"method", req.method}, {"route", tlsCtx.route},
-                       {"path", req.path}, {"status", res.status}, {"duration_ms", secs * 1000}, {"ip", tlsCtx.ip}};
-        if (!tlsCtx.errorCode.empty()) fields["error"] = tlsCtx.errorCode;
-        if (res.has_header("X-Cache")) fields["cache"] = res.get_header_value("X-Cache");
-        if (res.status >= 500) log().error("request", fields);
-        else log().info("request", fields);
+        if (tlsCtx.route != "/healthz" && tlsCtx.route != "/metrics") {
+            json fields = {{"request_id", tlsCtx.requestId}, {"method", method}, {"route", tlsCtx.route},
+                           {"path", req.path.substr(0, 256)}, {"status", res.status}, {"duration_ms", secs * 1000},
+                           {"ip", tlsCtx.ip}};
+            if (!tlsCtx.errorCode.empty()) fields["error"] = tlsCtx.errorCode;
+            if (res.has_header("X-Cache")) fields["cache"] = res.get_header_value("X-Cache");
+            if (res.status >= 500) log().error("request", fields);
+            else log().info("request", fields);
+        }
+        tlsCtx = RequestContext{};  // the next request on this thread starts clean
     });
 
     // ---------------------------------------------------------------- operations
@@ -270,42 +316,45 @@ void App::attach(httplib::Server &server) {
     });
 
     get(server, "/readyz", [this](const httplib::Request &, httplib::Response &res) {
-        // Readiness: safe to route traffic here (tables loaded, database reachable).
-        std::shared_ptr<Services> s;
-        std::string startupError;
+        // Readiness: the solver is loaded. It deliberately does not depend on the
+        // database, so a database outage doesn't get the instance restarted and
+        // take solving down with it. Storage state is reported as data.
+        bool solverUp, accountsUp, failed;
         {
             std::lock_guard<std::mutex> lock(servicesMu_);
-            s = services_;
-            startupError = startupError_;
+            solverUp = solver_ != nullptr;
+            accountsUp = accounts_ != nullptr;
+            failed = !startupError_.empty();
         }
-        if (!s) {
-            json body = {{"status", "warming_up"}};
-            if (!startupError.empty()) body["error"] = startupError;
-            sendJson(res, 503, body);
+        json storage = {{"kind", config_.databaseUrl.empty() ? "memory" : "postgres"}, {"available", accountsUp}};
+        if (!solverUp) {
+            // Details stay in the log: a connection error can echo the database URL.
+            sendJson(res, 503, {{"status", failed ? "failed" : "warming_up"}, {"storage", storage}});
             return;
         }
-        bool healthy;
-        {
-            std::lock_guard<std::mutex> lock(healthMu_);
-            auto now = std::chrono::steady_clock::now();
-            if (now - healthCheckedAt_ > std::chrono::seconds(5)) {  // don't hammer the database
-                lastHealthy_ = s->storage.healthy();
-                healthCheckedAt_ = now;
-            }
-            healthy = lastHealthy_;
-        }
-        sendJson(res, healthy ? 200 : 503, {{"status", healthy ? "ready" : "degraded"}, {"storage", s->storage.kind}});
+        sendJson(res, 200, {{"status", "ready"}, {"storage", storage}});
     });
 
-    get(server, "/metrics", [](const httplib::Request &, httplib::Response &res) {
+    get(server, "/metrics", [this](const httplib::Request &req, httplib::Response &res) {
+        if (!config_.metricsToken.empty() &&
+            !crypto::constantTimeEquals(req.get_header_value("Authorization"), "Bearer " + config_.metricsToken)) {
+            throw ApiError(401, "UNAUTHENTICATED", "Metrics require a token.");
+        }
         res.set_content(Metrics::instance().render(), "text/plain; version=0.0.4");
     });
 
     get(server, "/api/v1/info", [this](const httplib::Request &, httplib::Response &res) {
-        auto s = services();
+        auto solve = solver();
+        bool accountsUp;
+        {
+            std::lock_guard<std::mutex> lock(servicesMu_);
+            accountsUp = accounts_ != nullptr;
+        }
         double uptime = std::chrono::duration<double>(std::chrono::steady_clock::now() - started_).count();
         sendJson(res, 200, {{"name", "zen-cube-api"}, {"version", config_.version}, {"uptimeSeconds", uptime},
-                            {"storage", s->storage.kind}, {"solvers", s->solve->describeSolvers()},
+                            {"storage", {{"kind", config_.databaseUrl.empty() ? "memory" : "postgres"},
+                                         {"available", accountsUp}}},
+                            {"solvers", solve->describeSolvers()},
                             {"limits", {{"solveTimeoutMs", config_.solveTimeout.count()},
                                         {"optimalTimeoutMs", config_.optimalTimeout.count()},
                                         {"solveRatePerSecond", config_.solveRateRps}}}});
@@ -314,7 +363,7 @@ void App::attach(httplib::Server &server) {
     // ---------------------------------------------------------------- solving
     post(server, "/api/v1/validate", [this](const httplib::Request &req, httplib::Response &res) {
         json body = parseBody(req);
-        sendJson(res, 200, services()->solve->validate(requireString(body, "cube", 200), parseColorNames(body)));
+        sendJson(res, 200, solver()->validate(requireString(body, "cube", 200), parseColorNames(body)));
     });
 
     post(server, "/api/v1/solve", [this](const httplib::Request &req, httplib::Response &res) {
@@ -327,20 +376,24 @@ void App::attach(httplib::Server &server) {
         json body = {{"cube", req.get_param_value("cube")},
                      {"method", req.has_param("method") ? req.get_param_value("method") : "beginner"}};
         handleSolve(req, res, body);
-        if (res.status == 200) res.set_header("Cache-Control", "public, max-age=31536000, immutable");
+        // Exact answers never change; a fallback answer might be optimal next time.
+        if (res.status == 200) {
+            res.set_header("Cache-Control", res.body.find("\"fallbackFrom\"") == std::string::npos
+                                            ? "public, max-age=31536000, immutable" : "no-store");
+        }
     });
 
     get(server, "/api/v1/scramble", [this](const httplib::Request &req, httplib::Response &res) {
         limit(solveLimiter_, req, "solve");
         res.set_header("Cache-Control", "no-store");
-        sendJson(res, 200, services()->solve->scramble());
+        sendJson(res, 200, solver()->scramble());
     });
 
     // ---------------------------------------------------------------- accounts
     post(server, "/api/v1/auth/register", [this](const httplib::Request &req, httplib::Response &res) {
         limit(authLimiter_, req, "auth");
         json body = parseBody(req);
-        auto r = services()->auth->registerUser(requireString(body, "email", 300), requireString(body, "password", 200),
+        auto r = accounts()->auth->registerUser(requireString(body, "email", 300), requireString(body, "password", 200),
                                                 requireString(body, "displayName", 100));
         res.set_header("Cache-Control", "no-store");
         sendJson(res, 201, {{"token", r.token}, {"user", AuthService::userJson(r.user)}});
@@ -349,14 +402,14 @@ void App::attach(httplib::Server &server) {
     post(server, "/api/v1/auth/login", [this](const httplib::Request &req, httplib::Response &res) {
         limit(authLimiter_, req, "auth");
         json body = parseBody(req);
-        auto r = services()->auth->login(requireString(body, "email", 300), requireString(body, "password", 200));
+        auto r = accounts()->auth->login(requireString(body, "email", 300), requireString(body, "password", 200));
         res.set_header("Cache-Control", "no-store");
         sendJson(res, 200, {{"token", r.token}, {"user", AuthService::userJson(r.user)}});
     });
 
     get(server, "/api/v1/me", [this](const httplib::Request &req, httplib::Response &res) {
         int64_t uid = requireUser(req);
-        auto user = services()->auth->findUser(uid);
+        auto user = accounts()->auth->findUser(uid);
         if (!user) throw ApiError(401, "UNAUTHENTICATED", "Account not found. Please sign in again.");
         res.set_header("Cache-Control", "no-store");
         sendJson(res, 200, {{"user", AuthService::userJson(*user)}});
@@ -365,12 +418,14 @@ void App::attach(httplib::Server &server) {
     // ---------------------------------------------------------------- runs
     post(server, "/api/v1/runs", [this](const httplib::Request &req, httplib::Response &res) {
         int64_t uid = requireUser(req);
-        sendJson(res, 201, services()->runs->create(uid, parseBody(req)));
+        limitUser(uid);
+        sendJson(res, 201, accounts()->runs->create(uid, parseBody(req)));
     });
 
     post(server, "/api/v1/runs/batch", [this](const httplib::Request &req, httplib::Response &res) {
         int64_t uid = requireUser(req);
-        sendJson(res, 201, services()->runs->importBatch(uid, parseBody(req)));
+        limitUser(uid);
+        sendJson(res, 201, accounts()->runs->importBatch(uid, parseBody(req)));
     });
 
     get(server, "/api/v1/runs", [this](const httplib::Request &req, httplib::Response &res) {
@@ -384,7 +439,7 @@ void App::attach(httplib::Server &server) {
             }
         }
         res.set_header("Cache-Control", "no-store");
-        sendJson(res, 200, services()->runs->list(uid, limitN, req.get_param_value("cursor")));
+        sendJson(res, 200, accounts()->runs->list(uid, limitN, req.get_param_value("cursor")));
     });
 
     del(server, "/api/v1/runs/:id", [this](const httplib::Request &req, httplib::Response &res) {
@@ -395,14 +450,14 @@ void App::attach(httplib::Server &server) {
         } catch (const std::exception &) {
             throw ApiError(400, "BAD_REQUEST", "Run id must be a number.");
         }
-        services()->runs->remove(uid, id);
+        accounts()->runs->remove(uid, id);
         res.status = 204;
     });
 
     get(server, "/api/v1/stats", [this](const httplib::Request &req, httplib::Response &res) {
         int64_t uid = requireUser(req);
         res.set_header("Cache-Control", "no-store");
-        sendJson(res, 200, services()->runs->stats(uid));
+        sendJson(res, 200, accounts()->runs->stats(uid));
     });
 
     get(server, "/api/v1/leaderboard", [this](const httplib::Request &req, httplib::Response &res) {
@@ -415,7 +470,7 @@ void App::attach(httplib::Server &server) {
             }
         }
         res.set_header("Cache-Control", "public, max-age=30");
-        sendJson(res, 200, services()->runs->leaderboard(n));
+        sendJson(res, 200, accounts()->runs->leaderboard(n));
     });
 }
 

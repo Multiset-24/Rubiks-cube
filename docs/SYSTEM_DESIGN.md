@@ -116,7 +116,8 @@ INDEX runs_timer_idx ON runs (user_id, duration_ms) WHERE kind = 'timer' AND com
 - **Idempotent writes.** Clients send a `client_id` (UUID) with each run. The insert is `ON CONFLICT (user_id, client_id) DO NOTHING`, followed by a read of the existing row. A retried request, or a guest's local runs uploaded twice, never creates duplicates. This is what makes guest mode safe: runs recorded while signed out (or while the API was unreachable) sit in `localStorage` and are uploaded in one `POST /runs/batch` on sign-in.
 - **Keyset pagination.** History pages use `WHERE (created_at, id) < ($cursor)` ordered by the same columns. Each page is an index range scan regardless of how deep you page, and inserting new runs doesn't shift pages the way `OFFSET` does. The cursor is opaque (base64url of `createdAtMs:id`). `created_at` is stored at millisecond precision so the cursor round-trips exactly.
 - **Stats** are computed in one aggregate query plus two small ones: the last 12 timer results for Ao5/Ao12 (WCA rule: drop best and worst), and distinct active days for streaks. That is cheap at this scale. With many runs per user, I'd maintain a per-user summary row on write instead.
-- **Leaderboard** is the best completed timer single per user (at least 1 s, to drop junk). It is read-heavy and changes slowly, so the service caches it for 30 s and the response carries `Cache-Control: public, max-age=30`.
+- **Leaderboard** is the best completed timer single per user. Times are self-reported, so only runs with a scramble and at least 3 s count, and the UI says so. It is read-heavy and changes slowly, so the service caches the top 50 for 30 s. One request refreshes it while the others keep getting the previous copy, and no lock is held during the query.
+- **Write limits.** Each account can save 30 runs a minute and 5,000 in total, so one account can't fill the free database.
 
 **Migrations** are numbered SQL blocks in `pg_repo.cpp`, applied at startup inside a transaction and recorded in `schema_migrations`. They run under `pg_advisory_lock`, so if two instances start at once, one migrates and the other waits.
 
@@ -137,21 +138,21 @@ The same contract tests (`backend/tests/repo_test.cpp`) run against both. CI run
 | Solver too slow | Optimal falls back to Kociemba; Kociemba or beginner over budget gives 504 `SOLVER_TIMEOUT` |
 | Too many concurrent solves | 503 `BUSY` + `Retry-After: 2` within 2 s, instead of an ever-growing queue |
 | One client sending too much | Token-bucket rate limits per IP: all routes 10 rps (burst 40), solve 2 rps (burst 10), auth 10/min; 429 + `Retry-After` |
-| Database down at startup | Exponential backoff for about 30 s; if it still fails, `/readyz` reports the error and Render keeps the previous deploy |
-| Database down later | 503 `STORAGE_UNAVAILABLE` for account routes; solving still works; the frontend keeps runs locally and syncs later |
+| Database down (at startup or later) | Solving is unaffected. Account routes return 503 `STORAGE_UNAVAILABLE`; the frontend keeps runs locally and syncs later. At startup the server keeps retrying in the background (backoff up to 30 s) |
+| Database slow or unreachable mid-query | Connections use a 5 s connect timeout, TCP keepalives and a 10 s statement timeout, so a worker thread can't hang on it |
 | API asleep / unreachable | Frontend retries with backoff, shows "server starting"; the timer and learn page work offline |
 | Deploy / restart | SIGTERM stops accepting connections, in-flight requests finish, running searches see the shutdown flag and stop |
 
-Client IPs come from the first `X-Forwarded-For` entry, because Render's proxy sets it. That header can be spoofed when the server is reached directly, so `TRUST_PROXY=false` turns it off for other environments.
+Client IPs for rate limiting come from `X-Forwarded-For`, counted from the right (`TRUSTED_PROXY_HOPS`). Proxies append to that header, so the leftmost entries are whatever the client sent and can't be trusted. With the setting at 0 the socket address is used.
 
 ## Startup and health
 
 Render routes traffic to a new deploy once its health check passes. Two endpoints:
 
 - `/healthz` (liveness): the process is up. It never touches dependencies.
-- `/readyz` (readiness): the solver tables are loaded and the database answers. The DB ping result is cached for 5 s, so the check itself can't overload the DB.
+- `/readyz` (readiness): the solver is loaded. It reports whether account storage is available, but doesn't fail because of it.
 
-`render.yaml` points the health check at `/readyz`. A deploy whose database connection fails is therefore never promoted, and the previous version keeps serving.
+`render.yaml` points the health check at `/readyz`. Keeping the database out of that check matters: if readiness depended on Postgres, a database outage would make Render restart the instance, and solving (which doesn't need the database) would go down with it. The first version of this service did exactly that; the code review caught it.
 
 The server binds the port first and warms up on a background thread. On 0.1 CPU this takes about 5 s: the Kociemba tables (6.5 MB) are built and the 44 MB corner database is loaded. The corner database itself is computed during `docker build`, so cold starts never pay for it. Until warm-up finishes, solve routes return 503 `WARMING_UP` with `Retry-After`.
 
@@ -165,10 +166,11 @@ The server binds the port first and warms up on a background thread. On 0.1 CPU 
 - Parameterised SQL everywhere.
 - A per-user ownership check on every run query: `WHERE user_id = $token_user`, so you can't read or delete another user's runs by id.
 - Request body limit (256 KB), field length limits and strict JSON parsing.
+- `/metrics` can be protected with `METRICS_TOKEN`; metric labels use route templates and a fixed list of HTTP methods, so malformed requests can't create new series.
 - CORS allowlist. Exact origins plus wildcard patterns for Netlify deploy previews; the pattern must match a whole host, so `https://evil.com/x--zen-cube-solver.netlify.app` does not.
 - Response headers: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Cache-Control: no-store` on account data.
 - The container runs as a non-root user.
-- On the frontend: a strict CSP, and a `Permissions-Policy` that only allows the camera. Video frames never leave the browser; only the 54 sticker letters are sent.
+- On the frontend: a strict CSP whose `connect-src` names the one API host, and a `Permissions-Policy` that only allows the camera. Video frames never leave the browser; only the 54 sticker letters are sent.
 
 ## Testing
 
@@ -197,4 +199,4 @@ This deployment is one small instance. If it had real traffic, I'd change things
 - Colour detection is tuned for the standard colour scheme and decent light. The review step exists because it will sometimes be wrong.
 - Optimal is only practical for lightly scrambled cubes. That's inherent to IDA\* with a corner-only heuristic; Korf also used edge databases, which would need gigabytes.
 - Tokens can't be revoked early.
-- The leaderboard trusts client-reported times.
+- The leaderboard trusts client-reported times (with a 3 s floor).

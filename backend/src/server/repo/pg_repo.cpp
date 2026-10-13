@@ -185,6 +185,10 @@ public:
         return r.rows() > 0;
     }
 
+    int64_t count(int64_t userId) override {
+        return pool_->exec("SELECT count(*) FROM runs WHERE user_id = $1", {s(userId)}).i64(0, 0);
+    }
+
     RunTotals totals(int64_t userId) override {
         RunTotals t;
         auto r = pool_->exec(
@@ -222,7 +226,7 @@ public:
     std::vector<LeaderboardEntry> leaderboard(int limit, int64_t minMs) override {
         auto r = pool_->exec(
                 "SELECT u.display_name, min(r.duration_ms) AS best, count(*) FROM runs r JOIN users u ON u.id = r.user_id "
-                "WHERE r.kind = 'timer' AND r.completed AND r.duration_ms >= $2 "
+                "WHERE r.kind = 'timer' AND r.completed AND r.duration_ms >= $2 AND r.scramble <> '' "
                 "GROUP BY u.id, u.display_name ORDER BY best ASC LIMIT $1",
                 {s(limit), s(minMs)});
         std::vector<LeaderboardEntry> out;

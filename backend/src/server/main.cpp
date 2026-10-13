@@ -44,13 +44,15 @@ int main(int argc, char **argv) {
 
     if (config.buildTablesOnly) return buildTables(config);
 
-    if (config.jwtSecret.empty()) {
-        if (config.production()) {
-            log().error("JWT_SECRET must be set when DATABASE_URL is set");
-            return 2;
-        }
+    if (config.production() && config.jwtSecret.empty()) {
+        log().error("JWT_SECRET must be set when DATABASE_URL is set");
+        return 2;
+    }
+    if (!config.production()) {
+        // The in-memory store restarts user ids at 1, so a token that outlived a
+        // restart would name a different person. Use a per-boot secret instead.
+        if (!config.jwtSecret.empty()) log().warn("in-memory store: ignoring JWT_SECRET, using a per-boot secret");
         config.jwtSecret = crypto::randomHex(32);
-        log().warn("JWT_SECRET not set: using a random secret (sessions end on restart)");
     }
 
     httplib::Server server;
@@ -65,11 +67,17 @@ int main(int argc, char **argv) {
 
     std::thread warmup([&] {
         try {
-            app.setServices(buildServices(config, &gShutdown));
+            app.setSolver(buildSolveService(config, &gShutdown));
             log().info("ready", {{"version", config.version}});
         } catch (const std::exception &e) {
             app.setStartupError(e.what());
-            log().error("start-up failed; staying alive so /readyz can report it", {{"error", e.what()}});
+            log().error("solver start-up failed", {{"error", e.what()}});
+            return;
+        }
+        try {
+            if (auto accounts = connectAccounts(config, &gShutdown)) app.setAccounts(std::move(accounts));
+        } catch (const std::exception &e) {
+            log().error("account services failed to start", {{"error", redactSecrets(e.what(), config.databaseUrl)}});
         }
     });
 
@@ -81,11 +89,12 @@ int main(int argc, char **argv) {
     log().info("listening", {{"host", config.host}, {"port", config.port}, {"version", config.version},
                              {"workers", config.workerThreads}});
     bool ok = server.listen(config.host, config.port);
+    bool signalled = gShutdown.load();  // read before we set it ourselves
     gServer.store(nullptr);
     gShutdown.store(true);
     warmup.join();
-    if (!ok && !gShutdown.load()) {
-        log().error("could not listen", {{"port", config.port}});
+    if (!ok && !signalled) {
+        log().error("could not listen", {{"host", config.host}, {"port", config.port}});
         return 1;
     }
     log().info("shut down cleanly");

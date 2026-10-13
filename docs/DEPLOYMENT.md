@@ -41,7 +41,7 @@ The site is `https://zen-cube-solver.netlify.app`. To deploy from scratch: **Add
 
 If your Render URL differs from the one above, change `VITE_API_URL` in `netlify.toml` (or set it in Netlify's environment variables) and redeploy. Also add your Netlify URL to `CORS_ORIGINS` in Render if you renamed the site.
 
-You can point a deployed frontend at another API without rebuilding by adding `?api=https://your-api.example.com` to the URL. It is remembered in that browser.
+For local development, `?api=http://localhost:8080` on a dev build (`npm run dev`) points the frontend at another API. Production builds ignore it, so a crafted link can't redirect someone's login to another server.
 
 Netlify injects its own toolbar script into production pages. The site's CSP blocks the inline code it tries to run, which shows up as a console message but doesn't affect the app. You can turn the toolbar off in the site's settings on Netlify (the Netlify Drawer / toolbar option).
 
@@ -55,7 +55,10 @@ Netlify injects its own toolbar script into production pages. The site's CSP blo
 | `JWT_TTL_HOURS` | 168 | Session length |
 | `PASSWORD_HASH_ITERATIONS` | 150000 | PBKDF2 iterations; old hashes are upgraded on login |
 | `CORS_ORIGINS` | `*` | Comma-separated; supports `https://*--site.netlify.app` patterns |
-| `TRUST_PROXY` | true | Read the client IP from `X-Forwarded-For` (true behind Render) |
+| `TRUSTED_PROXY_HOPS` | 0 (2 on Render) | How many proxies append to `X-Forwarded-For`; 0 means use the socket address |
+| `METRICS_TOKEN` | (empty) | If set, `/metrics` requires `Authorization: Bearer <token>` |
+| `RUN_WRITES_PER_MINUTE` | 30 | Per account, saving runs |
+| `MAX_RUNS_PER_USER` | 5000 | Saved runs per account |
 | `WORKER_THREADS` | 8 | HTTP worker threads |
 | `MAX_CONCURRENT_SOLVES` | 4 (2 on Render) | Solve bulkhead size |
 | `MAX_CONCURRENT_OPTIMAL` | 1 | Optimal-search bulkhead size |
@@ -70,6 +73,16 @@ Netlify injects its own toolbar script into production pages. The site's CSP blo
 | `DB_POOL_SIZE` | 4 (3 on Render) | Postgres connections |
 | `DATA_DIR` | `./data` (`/app/data` in Docker) | Where `corner.db` lives |
 | `LOG_LEVEL` | info | debug, info, warn, error |
+
+## Client IP behind Render
+
+Rate limits are per client IP. Behind a proxy that IP comes from `X-Forwarded-For`, and only the entries the proxies append are trustworthy: anything further left was sent by the client. `TRUSTED_PROXY_HOPS` says how many entries from the right to use. Render doesn't document how many entries it appends, so check after the first deploy. Send a request with a fake header and look at the `ip` field in the request log:
+
+```bash
+curl -H "X-Forwarded-For: 1.2.3.4" https://zen-cube-solver-api.onrender.com/api/v1/info
+```
+
+If the log shows your real IP, the setting is right. If it shows `1.2.3.4`, lower the value by one. If it shows an internal address (every request then shares one limit), raise it by one.
 
 ## Running the production image locally
 

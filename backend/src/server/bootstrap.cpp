@@ -6,7 +6,6 @@
 
 #include "core/kociemba.h"
 #include "core/optimal.h"
-#include "server/infra/crypto.h"
 #include "server/infra/logger.h"
 
 namespace zc::server {
@@ -15,37 +14,14 @@ namespace {
 
 std::string cornerDbPath(const Config &c) { return (std::filesystem::path(c.dataDir) / "corner.db").string(); }
 
-Storage connectStorage(const Config &config, const std::atomic<bool> *shutdown) {
-    if (config.databaseUrl.empty()) {
-        log().warn("DATABASE_URL not set: using the in-memory store (accounts and runs are lost on restart)");
-        return makeMemoryStorage();
-    }
-    // Serverless Postgres may take a few seconds to wake up: retry with
-    // exponential backoff instead of crash-looping.
-    auto delay = std::chrono::milliseconds(500);
-    for (int attempt = 1;; ++attempt) {
-        try {
-            Storage s = makePostgresStorage(config.databaseUrl, config.dbPoolSize);
-            log().info("connected to postgres", {{"attempt", attempt}});
-            return s;
-        } catch (const std::exception &e) {
-            if (attempt >= 8 || (shutdown && shutdown->load())) throw;
-            log().warn("database not reachable yet, retrying", {{"attempt", attempt}, {"error", e.what()},
-                                                                 {"retry_in_ms", delay.count()}});
-            std::this_thread::sleep_for(delay);
-            delay = std::min(delay * 2, std::chrono::milliseconds(8000));
-        }
-    }
-}
-
 }  // namespace
 
-std::shared_ptr<Services> buildServices(const Config &config, const std::atomic<bool> *shutdown) {
+std::shared_ptr<SolveService> buildSolveService(const Config &config, const std::atomic<bool> *shutdown) {
     auto t0 = std::chrono::steady_clock::now();
     auto tables = KociembaTables::build();
-    auto t1 = std::chrono::steady_clock::now();
-    log().info("kociemba tables ready", {{"ms", std::chrono::duration<double, std::milli>(t1 - t0).count()},
-                                         {"bytes", tables->memoryBytes()}});
+    log().info("kociemba tables ready",
+               {{"ms", std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count()},
+                {"bytes", tables->memoryBytes()}});
 
     std::shared_ptr<const OptimalSolver> optimal;
     if (auto db = OptimalSolver::loadDatabase(cornerDbPath(config))) {
@@ -55,13 +31,41 @@ std::shared_ptr<Services> buildServices(const Config &config, const std::atomic<
         log().warn("corner pattern database not found: optimal solver disabled (run with --build-tables)",
                    {{"path", cornerDbPath(config)}});
     }
+    return std::make_shared<SolveService>(config, tables, optimal, shutdown);
+}
 
-    auto services = std::make_shared<Services>();
-    services->storage = connectStorage(config, shutdown);
-    services->solve = std::make_shared<SolveService>(config, tables, optimal, shutdown);
-    services->auth = std::make_shared<AuthService>(config, services->storage.users);
-    services->runs = std::make_shared<RunService>(services->storage.runs);
-    return services;
+std::shared_ptr<AccountServices> connectAccounts(const Config &config, const std::atomic<bool> *shutdown) {
+    Storage storage;
+    if (config.databaseUrl.empty()) {
+        log().warn("DATABASE_URL not set: using the in-memory store (accounts and runs are lost on restart)");
+        storage = makeMemoryStorage();
+    } else {
+        // Serverless Postgres can take a while to wake, and a database outage
+        // shouldn't stop the solver, so keep retrying in the background.
+        auto delay = std::chrono::milliseconds(500);
+        for (int attempt = 1;; ++attempt) {
+            if (shutdown && shutdown->load()) return nullptr;
+            try {
+                storage = makePostgresStorage(config.databaseUrl, config.dbPoolSize);
+                log().info("connected to postgres", {{"attempt", attempt}});
+                break;
+            } catch (const std::exception &e) {
+                log().warn("database not reachable, retrying",
+                           {{"attempt", attempt}, {"error", redactSecrets(e.what(), config.databaseUrl)},
+                            {"retry_in_ms", delay.count()}});
+                for (auto waited = std::chrono::milliseconds(0); waited < delay; waited += std::chrono::milliseconds(100)) {
+                    if (shutdown && shutdown->load()) return nullptr;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                delay = std::min(delay * 2, std::chrono::milliseconds(30000));
+            }
+        }
+    }
+    auto accounts = std::make_shared<AccountServices>();
+    accounts->storage = storage;
+    accounts->auth = std::make_shared<AuthService>(config, storage.users);
+    accounts->runs = std::make_shared<RunService>(storage.runs, config.maxRunsPerUser);
+    return accounts;
 }
 
 int buildTables(const Config &config) {

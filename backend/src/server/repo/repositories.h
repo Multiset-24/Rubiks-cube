@@ -40,12 +40,14 @@ public:
     // Newest first, keyset-paginated on (createdAt, id).
     virtual RunPage list(int64_t userId, int limit, const std::optional<RunCursor> &after) = 0;
     virtual bool remove(int64_t userId, int64_t runId) = 0;
+    virtual int64_t count(int64_t userId) = 0;
     virtual RunTotals totals(int64_t userId) = 0;
     // Durations of the most recent completed timer runs, newest first.
     virtual std::vector<int64_t> recentTimerTimes(int64_t userId, int n) = 0;
     // Distinct UTC days (YYYY-MM-DD) with at least one run, newest first.
     virtual std::vector<std::string> activeDays(int64_t userId, int maxDays) = 0;
-    // Best completed timer single per user (at least `minMs`, to drop junk).
+    // Best completed timer single per user, counting only runs with a scramble
+    // and at least `minMs` (times are self-reported; this drops obvious junk).
     virtual std::vector<LeaderboardEntry> leaderboard(int limit, int64_t minMs) = 0;
 };
 

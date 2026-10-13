@@ -128,9 +128,17 @@ public:
         return "Kociemba's two-phase algorithm: about 20 moves for any cube in milliseconds.";
     }
     json solve(const FaceletCube &fc, const CubieCube &cubie, const ColorNames &, const SearchBudget &budget) const override {
-        // Ask for <= 21 moves first (usually instant); relax if the budget is tight.
+        // A 21-move solution always exists, but for about 1 cube in 200 finding
+        // it takes over a second, while a 23-move one takes milliseconds. So the
+        // 21 and 23 attempts each get a quarter of the remaining time; the last
+        // attempt gets whatever is left.
         for (int maxLen: {21, 23, 26}) {
-            auto r = solveKociemba(*tables_, cubie, maxLen, budget);
+            SearchBudget attempt = budget;
+            if (maxLen < 26) {
+                auto now = SearchBudget::Clock::now();
+                if (budget.deadline > now) attempt.deadline = now + (budget.deadline - now) / 4;
+            }
+            auto r = solveKociemba(*tables_, cubie, maxLen, attempt);
             if (r.found) {
                 json body = solutionBody(id(), "kociemba-two-phase", fc, r.moves,
                                          movesAsStages(r.moves, "Fast solution",
@@ -140,7 +148,7 @@ public:
                 body["stats"] = {{"nodes", r.nodes}, {"phase1Length", r.phase1Length}};
                 return body;
             }
-            if (r.timedOut) break;
+            if (budget.expired(0)) break;  // the whole budget is gone, or shutting down
         }
         throw SolverBudgetExceeded("two-phase search exceeded its time budget");
     }
@@ -304,11 +312,18 @@ SolveResponse SolveService::solve(const SolveRequest &req) {
                 // Optimal search time grows exponentially with depth; for deep
                 // scrambles return a near-optimal answer instead of an error.
                 Metrics::instance().inc("solver_fallbacks_total", {{"from", "optimal"}, {"to", "kociemba"}});
-                json body = runStrategy(*strategies_.at("kociemba"), fc, *v.cubie, req.names);
+                json body;
+                try {
+                    body = runStrategy(*strategies_.at("kociemba"), fc, *v.cubie, req.names);
+                } catch (const SolverBudgetExceeded &) {
+                    throw ApiError(504, "SOLVER_TIMEOUT", "The solver ran out of time. Please try again.");
+                }
                 body["fallbackFrom"] = "optimal";
                 body["fallbackReason"] =
                         "This cube is too far from solved for an optimal search within the time limit, "
                         "so here is a near-optimal solution instead.";
+                // Cached so a repeat request doesn't spend the full budget again.
+                cache_.put(key, body);
                 return body;
             }
             throw ApiError(504, "SOLVER_TIMEOUT", "The solver ran out of time. Please try again.");

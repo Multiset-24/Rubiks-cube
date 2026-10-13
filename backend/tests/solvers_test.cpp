@@ -111,6 +111,21 @@ TEST(Beginner, WorksWhenWhiteIsScannedOnAnotherFace) {
     }
 }
 
+TEST(Beginner, HoldStepHighlightsTheCentresItNames) {
+    // White scanned on the front, blue on top: the hold step needs a rotation
+    // other than z2, and its highlight must still land on top, bottom and front.
+    ColorNames names = {"blue", "red", "white", "green", "orange", "yellow"};
+    std::mt19937 rng(17);
+    FaceletCube start = randomCubieCube(rng).toFacelets();
+    auto sol = solveBeginner(start, names, SearchBudget{});
+    const auto &hold = sol.stages.at(0).steps.at(0);
+    FaceletCube marked = FaceletCube::fromString(std::string(54, '.'));
+    std::string s = marked.str();
+    for (int f: hold.focus) s[static_cast<size_t>(f)] = '#';
+    FaceletCube after = FaceletCube::fromString(s).after(hold.setup);
+    for (int centre: {4, 31, 22}) EXPECT_EQ(after[centre], '#') << centre;  // U, D and F centres
+}
+
 TEST(CornerDatabase, FastIndexMatchesEngineIndex) {
     CornerPatternDatabase engineDb(0);
     std::mt19937 rng(21);

@@ -46,13 +46,20 @@ Config Config::fromEnv(int argc, char **argv) {
     c.version = env("APP_VERSION", commit.empty() ? c.version : commit.substr(0, 7));
     c.logLevel = env("LOG_LEVEL", c.logLevel);
     c.dataDir = env("DATA_DIR", c.dataDir);
+    // Pasted connection strings often carry quotes or whitespace (e.g. copied
+    // from a psql '...' snippet), which libpq would echo back in errors.
     c.databaseUrl = env("DATABASE_URL", "");
+    while (!c.databaseUrl.empty() && std::string(" \t\r\n'\"").find(c.databaseUrl.front()) != std::string::npos)
+        c.databaseUrl.erase(0, 1);
+    while (!c.databaseUrl.empty() && std::string(" \t\r\n'\"").find(c.databaseUrl.back()) != std::string::npos)
+        c.databaseUrl.pop_back();
     c.dbPoolSize = envNumber("DB_POOL_SIZE", c.dbPoolSize);
     c.jwtSecret = env("JWT_SECRET", "");
     c.jwtTtlHours = envNumber("JWT_TTL_HOURS", c.jwtTtlHours);
     c.passwordHashIterations = envNumber("PASSWORD_HASH_ITERATIONS", c.passwordHashIterations);
     c.corsOrigins = splitList(env("CORS_ORIGINS", "*"));
-    c.trustProxy = env("TRUST_PROXY", "true") != "false";
+    c.trustedProxyHops = envNumber("TRUSTED_PROXY_HOPS", c.trustedProxyHops);
+    c.metricsToken = env("METRICS_TOKEN", "");
     c.workerThreads = envNumber("WORKER_THREADS", c.workerThreads);
     c.maxConcurrentSolves = envNumber("MAX_CONCURRENT_SOLVES", c.maxConcurrentSolves);
     c.maxConcurrentOptimal = envNumber("MAX_CONCURRENT_OPTIMAL", c.maxConcurrentOptimal);
@@ -66,6 +73,8 @@ Config Config::fromEnv(int argc, char **argv) {
     c.solveRateRps = envNumber("SOLVE_RATE_RPS", c.solveRateRps);
     c.solveRateBurst = envNumber("SOLVE_RATE_BURST", c.solveRateBurst);
     c.authRatePerMinute = envNumber("AUTH_RATE_PER_MINUTE", c.authRatePerMinute);
+    c.runWritesPerMinute = envNumber("RUN_WRITES_PER_MINUTE", c.runWritesPerMinute);
+    c.maxRunsPerUser = envNumber("MAX_RUNS_PER_USER", c.maxRunsPerUser);
     c.maxBodyBytes = envNumber("MAX_BODY_BYTES", c.maxBodyBytes);
 
     for (int i = 1; i < argc; ++i) {

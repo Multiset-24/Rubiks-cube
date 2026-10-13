@@ -29,6 +29,11 @@ services:
         value: https://zen-cube-solver.netlify.app,https://*--zen-cube-solver.netlify.app,http://localhost:5173
       - key: LOG_LEVEL
         value: info
+      # Proxies in front of the service that append to X-Forwarded-For; the
+      # client IP for rate limiting is taken this many entries from the right.
+      # Check it after deploying (docs/DEPLOYMENT.md, "Client IP").
+      - key: TRUSTED_PROXY_HOPS
+        value: "2"
       # The free instance has a fraction of one CPU: keep concurrency modest
       # and let the bulkheads shed load instead of queueing.
       - key: WORKER_THREADS

@@ -33,6 +33,9 @@ private:
 inline Logger &log() { return Logger::instance(); }
 
 std::string isoTimestampMs(int64_t epochMs);
+
+// Removes passwords from connection strings (libpq can echo them in errors).
+std::string redactSecrets(std::string text, const std::string &databaseUrl = "");
 int64_t nowEpochMs();
 
 }  // namespace zc::server

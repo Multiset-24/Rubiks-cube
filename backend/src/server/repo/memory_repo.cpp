@@ -106,6 +106,11 @@ public:
         return true;
     }
 
+    int64_t count(int64_t userId) override {
+        std::lock_guard<std::mutex> lock(mu_);
+        return std::count_if(runs_.begin(), runs_.end(), [&](const Run &r) { return r.userId == userId; });
+    }
+
     RunTotals totals(int64_t userId) override {
         std::lock_guard<std::mutex> lock(mu_);
         RunTotals t;
@@ -153,7 +158,7 @@ public:
         {
             std::lock_guard<std::mutex> lock(mu_);
             for (const auto &r: runs_) {
-                if (r.kind != "timer" || !r.completed || r.durationMs < minMs) continue;
+                if (r.kind != "timer" || !r.completed || r.durationMs < minMs || r.scramble.empty()) continue;
                 auto &e = best[r.userId];
                 if (e.solves == 0 || r.durationMs < e.bestMs) e.bestMs = r.durationMs;
                 ++e.solves;

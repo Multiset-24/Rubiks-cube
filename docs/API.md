@@ -24,7 +24,7 @@ Every error uses the same shape:
 | 400 | `BAD_JSON`, `BAD_REQUEST`, `UNKNOWN_METHOD`, `VALIDATION_FAILED` (with `details.fields`), `BAD_CURSOR` |
 | 401 | `UNAUTHENTICATED`, `INVALID_CREDENTIALS` |
 | 404 | `NOT_FOUND` |
-| 409 | `EMAIL_TAKEN` |
+| 409 | `EMAIL_TAKEN`, `RUN_LIMIT_REACHED` |
 | 413 | `PAYLOAD_TOO_LARGE`, `TOO_MANY_RUNS` |
 | 422 | `INVALID_CUBE` (with `details.issues`) |
 | 429 | `RATE_LIMITED` (+ `Retry-After`) |
@@ -50,8 +50,8 @@ You can also send any six distinct characters, for example `W Y R O G B`. The ce
 | Route | Purpose |
 | --- | --- |
 | `GET /healthz` | Liveness: `{"status":"ok"}` |
-| `GET /readyz` | Readiness: 200 `{"status":"ready","storage":"postgres"}`, or 503 while warming up / if the DB is down |
-| `GET /metrics` | Prometheus metrics |
+| `GET /readyz` | Readiness: 200 `{"status":"ready","storage":{"kind":"postgres","available":true}}` once the solver is loaded; 503 while warming up |
+| `GET /metrics` | Prometheus metrics (needs `Authorization: Bearer <METRICS_TOKEN>` if that is set) |
 | `GET /api/v1/info` | Version, storage kind, available solvers, limits |
 
 ## Solving
@@ -191,7 +191,7 @@ A run is one tutor session, followed solution or timed solve.
 | `kind` | `tutor`, `fast`, `optimal` or `timer` (required) |
 | `method` | string, max 32 |
 | `facelets` | empty or 54 chars |
-| `scramble` | string, max 400 |
+| `scramble` | string, max 200 |
 | `moveCount` | 0–10000 |
 | `durationMs` | 0–86,400,000 |
 | `completed` | boolean |
@@ -233,10 +233,10 @@ Ao5/Ao12 follow the WCA rule: drop the best and worst of the last 5 (or 12), the
 
 ### `GET /api/v1/leaderboard?limit=20`
 
-Public. The best completed timer single per user, cached for 30 s:
+Public. The best completed timer single per user, cached for 30 s. Times are self-reported; only runs with a scramble and at least 3 s count.
 
 ```json
-{ "entries": [{ "rank": 1, "displayName": "Sourav", "bestMs": 18000, "solves": 5 }], "generatedAt": "..." }
+{ "entries": [{ "rank": 1, "displayName": "Sourav", "bestMs": 18000, "solves": 5 }], "generatedAt": "...", "selfReported": true }
 ```
 
 ## Rate limits
@@ -248,3 +248,4 @@ These are per client IP and configurable through environment variables. Over the
 | All routes except health/metrics | 10 req/s, burst 40 |
 | `/solve`, `/scramble` | 2 req/s, burst 10 |
 | `/auth/*` | 10 per minute |
+| `POST /runs`, `/runs/batch` | 30 per minute per account; at most 5,000 saved runs per account |

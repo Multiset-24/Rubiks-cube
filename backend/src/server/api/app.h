@@ -18,10 +18,9 @@
 
 namespace zc::server {
 
-// Everything that needs warm-up (solver tables, database connection). Built in
-// the background after the port is open, then published atomically.
-struct Services {
-    std::shared_ptr<SolveService> solve;
+// Account features need the database; solving does not. The two are published
+// separately so a database outage only affects accounts.
+struct AccountServices {
     std::shared_ptr<AuthService> auth;
     std::shared_ptr<RunService> runs;
     Storage storage;
@@ -34,9 +33,10 @@ public:
     App(const Config &config, std::atomic<bool> *shutdown);
 
     void attach(httplib::Server &server);
-    void setServices(std::shared_ptr<Services> services);
+    void setSolver(std::shared_ptr<SolveService> solver);
+    void setAccounts(std::shared_ptr<AccountServices> accounts);
     void setStartupError(const std::string &error);
-    bool ready() const;
+    bool ready() const;  // the solver is up
 
 private:
     using Handler = std::function<void(const httplib::Request &, httplib::Response &)>;
@@ -46,9 +46,11 @@ private:
     void del(httplib::Server &s, const std::string &pattern, Handler h);
     Handler wrap(const std::string &pattern, Handler h);
 
-    std::shared_ptr<Services> services() const;  // throws 503 while warming up
+    std::shared_ptr<SolveService> solver() const;        // throws 503 while warming up
+    std::shared_ptr<AccountServices> accounts() const;   // throws 503 until the database is connected
     int64_t requireUser(const httplib::Request &req) const;
     void limit(RateLimiter &limiter, const httplib::Request &req, const char *pool);
+    void limitUser(int64_t userId);  // per-account write limit for runs
     std::string clientIp(const httplib::Request &req) const;
     bool originAllowed(const std::string &origin) const;
 
@@ -57,17 +59,15 @@ private:
     const Config &config_;
     std::atomic<bool> *shutdown_;
     mutable std::mutex servicesMu_;
-    std::shared_ptr<Services> services_;
+    std::shared_ptr<SolveService> solver_;
+    std::shared_ptr<AccountServices> accounts_;
     std::string startupError_;
     std::chrono::steady_clock::time_point started_ = std::chrono::steady_clock::now();
 
     RateLimiter globalLimiter_;
     RateLimiter solveLimiter_;
     RateLimiter authLimiter_;
-
-    mutable std::mutex healthMu_;
-    mutable std::chrono::steady_clock::time_point healthCheckedAt_{};
-    mutable bool lastHealthy_ = false;
+    RateLimiter runWriteLimiter_;  // keyed by user id
 };
 
 }  // namespace zc::server

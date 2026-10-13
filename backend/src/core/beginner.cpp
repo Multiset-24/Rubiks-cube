@@ -344,7 +344,12 @@ private:
                            name(held.center(2)) + " facing you.";
         step.tip = "x, y and z turn the whole cube, not a single layer.";
         step.setup = *best;
-        step.focus = {4, 31, 22};
+        // Highlight the three centres the text names, located before the turn.
+        auto centreOf = [&](char colour) {
+            for (int f = 0; f < kNumFaces; ++f) if (cube_.center(f) == colour) return f * 9 + 4;
+            return 4;
+        };
+        step.focus = {centreOf(yellow_), centreOf(white_), centreOf(held.center(2))};
         addStep(std::move(step));
     }
 

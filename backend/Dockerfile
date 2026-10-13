@@ -29,7 +29,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends libpq5 libssl3 
 WORKDIR /app
 COPY --from=build /src/build/backend/src/server/zencube_server /app/zencube_server
 COPY --from=build /out/data /app/data
-ARG APP_VERSION=dev
+# Empty by default so the server falls back to Render's RENDER_GIT_COMMIT.
+ARG APP_VERSION=
 ENV APP_VERSION=${APP_VERSION} \
     DATA_DIR=/app/data \
     PORT=8080

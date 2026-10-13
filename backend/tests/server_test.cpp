@@ -1,5 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <filesystem>
 #include <thread>
 
@@ -33,10 +38,12 @@ std::string testDataDir() {
 
 class TestServer {
 public:
-    explicit TestServer(Config cfg) : config_(std::move(cfg)), app_(config_, &shutdown_) {
+    // withAccounts=false simulates a database that hasn't connected (yet).
+    explicit TestServer(Config cfg, bool withAccounts = true) : config_(std::move(cfg)), app_(config_, &shutdown_) {
         app_.attach(server_);
         server_.set_payload_max_length(config_.maxBodyBytes);
-        app_.setServices(buildServices(config_, &shutdown_));
+        app_.setSolver(buildSolveService(config_, &shutdown_));
+        if (withAccounts) app_.setAccounts(connectAccounts(config_, &shutdown_));
         port_ = server_.bind_to_any_port("127.0.0.1");
         thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
@@ -50,6 +57,7 @@ public:
         c.set_read_timeout(30, 0);
         return c;
     }
+    int port() const { return port_; }
 
 private:
     Config config_;
@@ -70,6 +78,7 @@ Config baseConfig() {
     c.solveRateRps = 1000;
     c.solveRateBurst = 1000;
     c.authRatePerMinute = 1000;
+    c.runWritesPerMinute = 1000;
     c.corsOrigins = {"https://zen.example", "https://*--zen.netlify.app"};
     c.maxBodyBytes = 64 * 1024;
     return c;
@@ -95,6 +104,37 @@ std::string registerUser(httplib::Client &c, const std::string &name = "Ada") {
 
 const char *kOneMove = "UUFUUFUUFRRRRRRRRRFFDFFDFFDDDBDDBDDBLLLLLLLLLUBBUBBUBB";  // after R
 
+// Sends raw bytes (in the given pieces, with small pauses between them) on one
+// connection and returns everything the server writes back within ~1 s.
+std::string rawExchange(int port, const std::vector<std::string> &pieces) {
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(static_cast<uint16_t>(port));
+    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
+    if (connect(fd, reinterpret_cast<sockaddr *>(&addr), sizeof addr) != 0) {
+        close(fd);
+        return "";
+    }
+    for (const auto &p: pieces) {
+        send(fd, p.data(), p.size(), 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(80));
+    }
+    timeval tv{1, 0};
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
+    std::string out;
+    char buf[4096];
+    for (ssize_t n; (n = recv(fd, buf, sizeof buf, 0)) > 0;) out.append(buf, static_cast<size_t>(n));
+    close(fd);
+    return out;
+}
+
+int countOf(const std::string &haystack, const std::string &needle) {
+    int n = 0;
+    for (size_t at = haystack.find(needle); at != std::string::npos; at = haystack.find(needle, at + 1)) ++n;
+    return n;
+}
+
 }  // namespace
 
 TEST(Server, HealthReadinessAndInfo) {
@@ -102,7 +142,9 @@ TEST(Server, HealthReadinessAndInfo) {
     EXPECT_EQ(c.Get("/healthz")->status, 200);
     auto ready = c.Get("/readyz");
     EXPECT_EQ(ready->status, 200);
-    EXPECT_EQ(body(ready)["storage"], "memory");
+    EXPECT_EQ(body(ready)["storage"]["kind"], "memory");
+    EXPECT_TRUE(body(ready)["storage"]["available"].get<bool>());
+    EXPECT_FALSE(body(ready).contains("error"));
     auto info = body(c.Get("/api/v1/info"));
     EXPECT_EQ(info["solvers"].size(), 3u);
     EXPECT_TRUE(info["solvers"][2]["available"].get<bool>());
@@ -162,6 +204,26 @@ TEST(Server, OptimalFallsBackToFastForDeepScrambles) {
     json b = body(r);
     EXPECT_EQ(b["fallbackFrom"], "optimal");
     EXPECT_EQ(b["method"], "kociemba");
+
+    // The fallback is cached, so a repeat doesn't spend the budget again...
+    auto again = c.Post("/api/v1/solve", json{{"cube", cube}, {"method", "optimal"}}.dump(), "application/json");
+    EXPECT_EQ(again->get_header_value("X-Cache"), "HIT");
+    // ...but HTTP caches must not keep it forever: it isn't an exact answer.
+    auto viaGet = c.Get("/api/v1/solve?method=optimal&cube=" + cube);
+    EXPECT_EQ(viaGet->get_header_value("Cache-Control"), "no-store");
+}
+
+TEST(Server, FastSolverFindsSlowCubesWithinBudget) {
+    // About 1 cube in 200 takes over a second to solve in 21 moves but
+    // milliseconds in 23; the solver must not spend its whole budget on 21.
+    Config cfg = baseConfig();
+    cfg.solveTimeout = std::chrono::milliseconds(300);
+    TestServer s(cfg);
+    auto c = s.client();
+    const std::string slow = "BRFUULDFUFDDFRRULURULDFDLUBDBLBDULRFRRBFLBDLBRBUFBLRDF";
+    auto r = c.Post("/api/v1/solve", json{{"cube", slow}, {"method", "kociemba"}}.dump(), "application/json");
+    ASSERT_EQ(r->status, 200) << r->body;
+    EXPECT_TRUE(FaceletCube::fromString(slow).after(parseMoves(body(r)["moves"].get<std::string>())).isSolved());
 }
 
 TEST(Server, ErrorEnvelope) {
@@ -323,6 +385,73 @@ TEST(Server, RateLimitingReturns429WithRetryAfter) {
     EXPECT_EQ(limited, 3);
     EXPECT_FALSE(retryAfter.empty());
     EXPECT_EQ(c.Get("/healthz")->status, 200);  // probes are never limited
+}
+
+TEST(Server, RateLimitedBodyIsNotParsedAsAnotherRequest) {
+    // A 429 sent before the body is read would leave the body on the
+    // connection, to be parsed as the next request.
+    Config cfg = baseConfig();
+    cfg.rateLimitRps = 0.01;
+    cfg.rateLimitBurst = 1;
+    TestServer s(cfg);
+    std::string smuggled = "GET /api/v1/info HTTP/1.1\r\nHost: x\r\nX-Request-Id: SMUGGLED\r\n\r\n";
+    std::string first = "GET /api/v1/info HTTP/1.1\r\nHost: x\r\n\r\n";
+    std::string headers = "POST /api/v1/validate HTTP/1.1\r\nHost: x\r\nContent-Type: application/json\r\n"
+                          "Content-Length: " + std::to_string(smuggled.size()) + "\r\n\r\n";
+    std::string out = rawExchange(s.port(), {first, headers, smuggled});
+    EXPECT_EQ(countOf(out, "HTTP/1.1 429"), 1) << out;
+    EXPECT_EQ(out.find("SMUGGLED"), std::string::npos) << out;
+}
+
+TEST(Server, ClientIpComesFromTheRightOfForwardedFor) {
+    Config cfg = baseConfig();
+    cfg.rateLimitRps = 0.01;
+    cfg.rateLimitBurst = 3;
+    cfg.trustedProxyHops = 1;
+    TestServer s(cfg);
+    auto c = s.client();
+    int limited = 0;
+    for (int i = 0; i < 5; ++i) {
+        // A client changing the left part must still share one bucket.
+        httplib::Headers h = {{"X-Forwarded-For", "10.0.0." + std::to_string(i) + ", 198.51.100.7"}};
+        if (c.Get("/api/v1/info", h)->status == 429) ++limited;
+    }
+    EXPECT_EQ(limited, 2);
+    EXPECT_EQ(c.Get("/api/v1/info", {{"X-Forwarded-For", "10.0.0.1, 198.51.100.8"}})->status, 200);
+}
+
+TEST(Server, SolvingWorksWhileTheDatabaseIsDown) {
+    TestServer s(baseConfig(), /*withAccounts=*/false);
+    auto c = s.client();
+    auto ready = c.Get("/readyz");
+    EXPECT_EQ(ready->status, 200);  // readiness doesn't depend on the database
+    EXPECT_FALSE(body(ready)["storage"]["available"].get<bool>());
+    EXPECT_EQ(c.Post("/api/v1/solve", json{{"cube", kOneMove}}.dump(), "application/json")->status, 200);
+    auto login = c.Post("/api/v1/auth/login", json{{"email", "a@b.co"}, {"password", "whatever1"}}.dump(),
+                        "application/json");
+    EXPECT_EQ(login->status, 503);
+    EXPECT_EQ(body(login)["error"]["code"], "STORAGE_UNAVAILABLE");
+}
+
+TEST(Server, RunLimitPerAccount) {
+    Config cfg = baseConfig();
+    cfg.maxRunsPerUser = 3;
+    TestServer s(cfg);
+    auto c = s.client();
+    auto h = bearer(registerUser(c, "Quota"));
+    for (int i = 0; i < 3; ++i) {
+        ASSERT_EQ(c.Post("/api/v1/runs", h, json{{"kind", "timer"}, {"durationMs", 9000}}.dump(), "application/json")->status, 201);
+    }
+    auto over = c.Post("/api/v1/runs", h, json{{"kind", "timer"}, {"durationMs", 9000}}.dump(), "application/json");
+    EXPECT_EQ(over->status, 409);
+    EXPECT_EQ(body(over)["error"]["code"], "RUN_LIMIT_REACHED");
+}
+
+TEST(Server, MalformedRequestsDontCreateMetricSeries) {
+    auto &srv = shared();
+    rawExchange(srv.port(), {"ZZWEIRDMETHOD / HTTP/1.1\r\nHost: x\r\n\r\n"});
+    auto m = srv.client().Get("/metrics");
+    EXPECT_EQ(m->body.find("ZZWEIRDMETHOD"), std::string::npos);
 }
 
 TEST(Server, MetricsExposeRequestCounters) {

@@ -96,7 +96,7 @@ Run RunService::parseRun(int64_t userId, const json &in) const {
     r.method = strField(in, "method", 32, errors);
     r.facelets = strField(in, "facelets", 54, errors);
     if (!r.facelets.empty() && r.facelets.size() != 54) errors["facelets"] = "Must be 54 characters.";
-    r.scramble = strField(in, "scramble", 400, errors);
+    r.scramble = strField(in, "scramble", 200, errors);
     r.clientId = strField(in, "clientId", 64, errors);
     r.moveCount = intField<int>(in, "moveCount", 0, 10000, errors);
     r.durationMs = intField<int64_t>(in, "durationMs", 0, kDayMs, errors);
@@ -116,8 +116,18 @@ Run RunService::parseRun(int64_t userId, const json &in) const {
     return r;
 }
 
+void RunService::checkQuota(int64_t userId, size_t adding) {
+    if (runs_->count(userId) + static_cast<int64_t>(adding) > maxRunsPerUser_) {
+        throw ApiError(409, "RUN_LIMIT_REACHED",
+                       "This account has reached its limit of " + std::to_string(maxRunsPerUser_) +
+                       " saved runs. Delete some to save more.");
+    }
+}
+
 json RunService::create(int64_t userId, const json &input) {
-    return runJson(runs_->create(parseRun(userId, input)));
+    Run r = parseRun(userId, input);
+    checkQuota(userId, 1);
+    return runJson(runs_->create(r));
 }
 
 json RunService::importBatch(int64_t userId, const json &input) {
@@ -128,6 +138,7 @@ json RunService::importBatch(int64_t userId, const json &input) {
     if (arr.size() > 200) throw ApiError(413, "TOO_MANY_RUNS", "Import at most 200 runs at a time.");
     std::vector<Run> parsed;
     for (const auto &item: arr) parsed.push_back(parseRun(userId, item));  // validate all before writing any
+    checkQuota(userId, parsed.size());
     json out = json::array();
     for (const auto &r: parsed) out.push_back(runJson(runs_->create(r)));
     return {{"runs", out}, {"imported", out.size()}};
@@ -210,19 +221,46 @@ json RunService::stats(int64_t userId) {
 
 json RunService::leaderboard(int limit) {
     limit = std::clamp(limit, 1, 50);
-    std::lock_guard<std::mutex> lock(boardMu_);
-    auto now = std::chrono::steady_clock::now();
-    if (boardLimit_ != limit || now - boardAt_ > std::chrono::seconds(30)) {
-        json entries = json::array();
-        int rank = 0;
-        for (const auto &e: runs_->leaderboard(limit, 1000)) {
-            entries.push_back({{"rank", ++rank}, {"displayName", e.displayName}, {"bestMs", e.bestMs}, {"solves", e.solves}});
+    json entries;
+    bool refresh = false;
+    {
+        std::lock_guard<std::mutex> lock(boardMu_);
+        bool fresh = !boardEntries_.is_null() && std::chrono::steady_clock::now() - boardAt_ < std::chrono::seconds(30);
+        // One caller refreshes; the others keep serving the previous board.
+        if (!fresh && !boardRefreshing_) {
+            boardRefreshing_ = true;
+            refresh = true;
         }
-        board_ = {{"entries", entries}, {"generatedAt", isoTimestampMs(nowEpochMs())}};
-        boardAt_ = now;
-        boardLimit_ = limit;
+        entries = boardEntries_;
     }
-    return board_;
+    if (refresh || entries.is_null()) {
+        json fetched = json::array();
+        try {
+            int rank = 0;
+            for (const auto &e: runs_->leaderboard(50, kLeaderboardMinMs)) {
+                fetched.push_back({{"rank", ++rank}, {"displayName", e.displayName}, {"bestMs", e.bestMs},
+                                   {"solves", e.solves}});
+            }
+        } catch (...) {
+            if (refresh) {
+                std::lock_guard<std::mutex> lock(boardMu_);
+                boardRefreshing_ = false;
+            }
+            if (entries.is_null()) throw;
+            fetched = entries;  // serve the stale board rather than fail
+            refresh = false;
+        }
+        if (refresh) {
+            std::lock_guard<std::mutex> lock(boardMu_);
+            boardEntries_ = fetched;
+            boardAt_ = std::chrono::steady_clock::now();
+            boardRefreshing_ = false;
+        }
+        entries = fetched;
+    }
+    json top = json::array();
+    for (size_t i = 0; i < entries.size() && static_cast<int>(i) < limit; ++i) top.push_back(entries[i]);
+    return {{"entries", top}, {"generatedAt", isoTimestampMs(nowEpochMs())}, {"selfReported", true}};
 }
 
 }  // namespace zc::server

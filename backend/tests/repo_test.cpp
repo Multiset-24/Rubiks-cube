@@ -107,6 +107,7 @@ TEST_P(RepoContract, TotalsTimesDaysAndDeletion) {
         r.quizCorrect = quizC;
         r.quizTotal = quizT;
         r.moveCount = moves;
+        if (kind == "timer") r.scramble = "R U F' L2 D";
         return storage.runs->create(r);
     };
     add(u, "tutor", true, 300000, 8, 10, 150);
@@ -134,7 +135,7 @@ TEST_P(RepoContract, TotalsTimesDaysAndDeletion) {
     ASSERT_EQ(days.size(), 1u);
     EXPECT_EQ(days[0], utcDay(nowEpochMs()));
 
-    auto board = storage.runs->leaderboard(100, 1000);
+    auto board = storage.runs->leaderboard(100, 3000);
     bool sawBob = false, sawAda = false;
     for (const auto &e: board) {
         if (e.displayName == "Bob" && e.bestMs == 20000) sawBob = true;
@@ -142,6 +143,8 @@ TEST_P(RepoContract, TotalsTimesDaysAndDeletion) {
     }
     EXPECT_TRUE(sawBob);
     EXPECT_TRUE(sawAda);
+
+    EXPECT_EQ(storage.runs->count(u.id), 5);
 
     EXPECT_FALSE(storage.runs->remove(other.id, fast.id));  // not yours
     EXPECT_TRUE(storage.runs->remove(u.id, fast.id));
