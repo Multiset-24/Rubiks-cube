@@ -1,0 +1,34 @@
+# Netlify: builds and serves the frontend (frontend/). The API runs on Render.
+
+[build]
+  base = "frontend"
+  command = "npm ci && npm test && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Public URL of the Render service from render.yaml. If Render gave your
+  # service a different URL, change it here (or set VITE_API_URL in the Netlify UI).
+  VITE_API_URL = "https://zen-cube-solver-api.onrender.com"
+
+# Single-page app: every route serves index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # The scanner needs the camera; nothing else needs powerful features.
+    Permissions-Policy = "camera=(self), microphone=(), geolocation=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.onrender.com http://localhost:8080; frame-ancestors 'none'; base-uri 'self'"
+
+# Hashed build assets never change: cache them for a year.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
