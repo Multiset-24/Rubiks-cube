@@ -119,6 +119,12 @@ function Player({ solution }: { solution: Solution }) {
     return { facelets: f, focus };
   }, [finished, states, total, k, cur, done, moves]);
 
+  // Bumped by every jump and every new play, so a play that was cut short
+  // doesn't apply its moves to the step the user moved to.
+  const playGen = useRef(0);
+  const shownRef = useRef(shown);
+  shownRef.current = shown;
+
   const quiz = Object.values(answers);
   const quizCorrect = quiz.filter(Boolean).length;
 
@@ -142,6 +148,7 @@ function Player({ solution }: { solution: Solution }) {
   }, [finished, token, solution, cube, quizCorrect, quiz.length, total]);
 
   const goTo = useCallback((next: number) => {
+    playGen.current++;
     cubeRef.current?.stop();
     setPlaying(false);
     setActive(-1);
@@ -149,38 +156,51 @@ function Player({ solution }: { solution: Solution }) {
     setK(Math.max(0, Math.min(total, next)));
   }, [total]);
 
+  // After a jump, the engine has finished the cut-short move on the old
+  // state, so put it back on what the current step shows.
+  const resync = useCallback(() => {
+    cubeRef.current?.setState(shownRef.current.facelets, shownRef.current.focus);
+  }, []);
+
   const playRest = useCallback(async () => {
     if (playing || finished || needsQuiz) return;
     const rest = moves.slice(done);
     if (!rest.length) return goTo(k + 1);
+    const gen = ++playGen.current;
     setPlaying(true);
     const from = done;
     await cubeRef.current?.play(rest, {
       msPerTurn: SPEEDS[speed],
       onMove: (i) => {
+        if (gen !== playGen.current) return;
         setActive(from + i);
         setDone(from + i);
       },
     });
+    if (gen !== playGen.current) return resync();
     setDone(moves.length);
     setActive(-1);
     setPlaying(false);
-  }, [playing, finished, needsQuiz, moves, done, goTo, k, speed]);
+  }, [playing, finished, needsQuiz, moves, done, goTo, k, speed, resync]);
 
   const nextMove = useCallback(async () => {
     if (playing || finished || needsQuiz) return;
     if (done >= moves.length) return goTo(k + 1);
+    const gen = ++playGen.current;
     setPlaying(true);
     setActive(done);
     await cubeRef.current?.play([moves[done]], { msPerTurn: SPEEDS[speed] });
+    if (gen !== playGen.current) return resync();
     setDone(done + 1);
     setActive(-1);
     setPlaying(false);
-  }, [playing, finished, needsQuiz, done, moves, goTo, k, speed]);
+  }, [playing, finished, needsQuiz, done, moves, goTo, k, speed, resync]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
+      const t = e.target as HTMLElement | null;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (t?.closest?.('input, select, textarea, [contenteditable="true"]')) return;
       if (e.code === 'Space' || e.code === 'ArrowRight') {
         e.preventDefault();
         void nextMove();
@@ -191,6 +211,8 @@ function Player({ solution }: { solution: Solution }) {
       } else if (e.code === 'Escape') {
         setZen(false);
       } else if (e.key === 'Enter') {
+        // Enter on a focused button or link clicks it; don't also play the step.
+        if (t?.closest?.('button, a, [role="button"], [role="radio"]')) return;
         void playRest();
       }
     };
@@ -199,6 +221,7 @@ function Player({ solution }: { solution: Solution }) {
   }, [nextMove, playRest, goTo, k]);
 
   const nextMoveText = !finished && done < moves.length ? moves[done] : null;
+  const answer = (ok: boolean) => setAnswers((a) => ({ ...a, [k]: ok }));
   const stageStart = flat.findIndex((f) => f.stage === cur?.stage);
 
   return (
@@ -228,13 +251,19 @@ function Player({ solution }: { solution: Solution }) {
           {zen && (
             <div className="zen-overlay" onClick={() => void nextMove()}>
               <p className="zen-overlay__step">{finished ? 'Solved' : cur.step.title}</p>
-              {nextMoveText && (
+              {needsQuiz ? (
+                // Clicks here answer the quiz; they must not reach the overlay.
+                <div className="zen-overlay__quiz" onClick={(e) => e.stopPropagation()}>
+                  <Quiz key={k} quiz={cur.step.quiz!} onAnswered={answer} />
+                </div>
+              ) : nextMoveText ? (
                 <>
                   <p className="zen-overlay__move">{moveToString(nextMoveText)}</p>
                   <p className="zen-overlay__desc">{describeMove(nextMoveText)}</p>
                 </>
+              ) : (
+                !finished && <p className="zen-overlay__desc">Tap for the next step</p>
               )}
-              {!finished && !nextMoveText && <p className="zen-overlay__desc">Tap for the next step</p>}
               <button type="button" className="btn btn--quiet zen-overlay__exit" onClick={(e) => { e.stopPropagation(); setZen(false); }}>
                 Leave zen mode
               </button>
@@ -282,7 +311,7 @@ function Player({ solution }: { solution: Solution }) {
                 )}
 
                 {needsQuiz ? (
-                  <Quiz key={k} quiz={cur.step.quiz!} onAnswered={(ok) => setAnswers((a) => ({ ...a, [k]: ok }))} />
+                  <Quiz key={k} quiz={cur.step.quiz!} onAnswered={answer} />
                 ) : (
                   <>
                     <div className="step__block">

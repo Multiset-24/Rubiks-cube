@@ -118,7 +118,7 @@ export default function Review() {
               </button>
             ))}
           </div>
-          <CubeNet facelets={facelets} colors={colors} onPaint={onPaint} flagged={flagged} lowConfidence={cube?.unsure} />
+          <CubeNet facelets={facelets} colors={colors} names={scheme} onPaint={onPaint} flagged={flagged} lowConfidence={cube?.unsure} />
           {unknown > 0 && <p className="muted small">{unknown} stickers left to paint.</p>}
         </div>
 

@@ -1,5 +1,5 @@
 import type { Scheme } from './cube/colors';
-import { load, save } from './storage';
+import { save } from './storage';
 
 // ---------------------------------------------------------------- types
 
@@ -127,15 +127,19 @@ export class ApiError extends Error {
 const API_KEY = 'zen-cube:api';
 
 function resolveBase(): string {
-  // ?api=https://... lets you point a deployed frontend at another backend.
-  try {
-    const fromQuery = new URLSearchParams(window.location.search).get('api');
-    if (fromQuery) save(API_KEY, fromQuery);
-  } catch {
-    /* not in a browser */
+  // Older builds saved ?api= here for good. Clear it so those browsers use the
+  // real API again.
+  save(API_KEY, null);
+  let base = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:8080';
+  // ?api=http://... points a dev build at another backend. Production ignores
+  // it, since it would send tokens and passwords to any host in a link.
+  if (import.meta.env.DEV) {
+    try {
+      base = new URLSearchParams(window.location.search).get('api') || base;
+    } catch {
+      /* not in a browser */
+    }
   }
-  const stored = load<string | null>(API_KEY, null);
-  const base = stored || (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:8080';
   return base.replace(/\/+$/, '');
 }
 

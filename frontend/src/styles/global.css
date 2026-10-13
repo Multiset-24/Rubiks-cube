@@ -299,6 +299,7 @@ input[type='checkbox'] { accent-color: var(--accent); width: 1em; height: 1em; p
 .zen-overlay__move { font-family: var(--font-display); font-size: clamp(2.6rem, 9vw, 4.5rem); margin: 0; line-height: 1.05; }
 .zen-overlay__desc { color: var(--ink-2); margin: 0; }
 .zen-overlay__exit { position: absolute; top: 16px; right: 16px; }
+.zen-overlay__quiz { position: relative; width: min(100%, 520px); cursor: default; }
 
 /* ------------------------------------------------------------- timer */
 .timer__scramble { text-align: center; }

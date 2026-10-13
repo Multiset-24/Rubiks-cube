@@ -24,21 +24,30 @@ export default function Learn() {
   const [state, setState] = useState(SOLVED);
   const [last, setLast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const gen = useRef(0); // bumped by reset, so a play it cut short is ignored
 
   const play = async (notation: string) => {
     if (busy) return;
+    const my = ++gen.current;
     setBusy(true);
     setLast(notation);
     const moves = parseMoves(notation);
     await ref.current?.play(moves, { msPerTurn: 380 });
+    if (my !== gen.current) return;
     setState((s) => applyMoves(s, moves));
     setBusy(false);
   };
   const reset = () => {
-    ref.current?.stop();
+    const my = ++gen.current;
     setState(SOLVED);
-    ref.current?.setState(SOLVED, []);
     setLast(null);
+    // play([]) stops any animation and resolves once the engine is idle, so
+    // SOLVED is shown after the move in flight has finished.
+    void ref.current?.play([]).then(() => {
+      if (my !== gen.current) return;
+      ref.current?.setState(SOLVED, []);
+      setBusy(false);
+    });
   };
   const lastDescription = useMemo(() => {
     if (!last) return 'Tap a move to see it.';

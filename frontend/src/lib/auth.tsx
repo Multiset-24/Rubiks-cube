@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, type User } from './api';
 import { syncGuestRuns } from './runs';
 import { load, save } from './storage';
@@ -22,7 +22,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(() => load(KEY, { token: null, user: null }));
   const [syncedRuns, setSyncedRuns] = useState(0);
 
+  // The current token, for async work that must not act on a session the
+  // user has since left.
+  const tokenRef = useRef(state.token);
+
   const persist = useCallback((s: AuthState) => {
+    tokenRef.current = s.token;
     setState(s);
     save(KEY, s.token ? s : null);
   }, []);
@@ -33,13 +38,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSyncedRuns(await syncGuestRuns(token));
   }, [persist]);
 
-  // Validate a stored session once on load.
+  // Validate a stored session once on load, then upload any runs that were
+  // kept on this device while the server was unreachable.
   useEffect(() => {
-    if (!state.token) return;
-    api.me(state.token).then(
-      ({ user }) => persist({ token: state.token, user }),
+    const token = state.token;
+    if (!token) return;
+    api.me(token).then(
+      async ({ user }) => {
+        if (tokenRef.current !== token) return;
+        persist({ token, user });
+        const synced = await syncGuestRuns(token);
+        if (tokenRef.current === token) setSyncedRuns(synced);
+      },
       (e) => {
-        if (e instanceof ApiError && e.status === 401) persist({ token: null, user: null });
+        if (e instanceof ApiError && e.status === 401 && tokenRef.current === token) persist({ token: null, user: null });
       },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps

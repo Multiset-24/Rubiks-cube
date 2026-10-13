@@ -42,6 +42,12 @@ export default function Timer() {
   const inspectRef = useRef<number | null>(null);
   const phaseRef = useRef<Phase>('idle');
   phaseRef.current = phase;
+  // Read through refs so the key handlers below keep the same identity.
+  const scrambleRef = useRef(scramble);
+  scrambleRef.current = scramble;
+  const inspectionRef = useRef(inspection);
+  inspectionRef.current = inspection;
+  const solveScramble = useRef(''); // the scramble the running solve started from
 
   useEffect(() => {
     void newScramble().then(setScramble);
@@ -64,6 +70,7 @@ export default function Timer() {
   const startSolve = useCallback(() => {
     if (inspectRef.current) window.clearInterval(inspectRef.current);
     startRef.current = performance.now();
+    solveScramble.current = scrambleRef.current;
     setPhase('running');
     rafRef.current = requestAnimationFrame(tick);
   }, [tick]);
@@ -73,11 +80,12 @@ export default function Timer() {
     const ms = Math.round(performance.now() - startRef.current);
     setElapsed(ms);
     setPhase('stopped');
+    const scramble = solveScramble.current;
     const solve = { ms, scramble, at: Date.now() };
     setSession((s) => [solve, ...s]);
     void saveRun(token, { kind: 'timer', durationMs: ms, scramble, completed: true });
     void newScramble().then(setScramble);
-  }, [scramble, token]);
+  }, [token]);
 
   const startInspection = useCallback(() => {
     setPhase('inspecting');
@@ -92,18 +100,18 @@ export default function Timer() {
     const p = phaseRef.current;
     if (p === 'running') return stopSolve();
     if (p === 'idle' || p === 'stopped' || p === 'inspecting') {
-      if (inspection && p !== 'inspecting') return startInspection();
+      if (inspectionRef.current && p !== 'inspecting') return startInspection();
       setPhase('holding');
       holdRef.current = window.setTimeout(() => setPhase('ready'), HOLD_MS);
     }
-  }, [stopSolve, inspection, startInspection]);
+  }, [stopSolve, startInspection]);
 
   const release = useCallback(() => {
     const p = phaseRef.current;
     if (holdRef.current) window.clearTimeout(holdRef.current);
     if (p === 'ready') startSolve();
-    else if (p === 'holding') setPhase(inspection && inspectRef.current ? 'inspecting' : 'idle');
-  }, [startSolve, inspection]);
+    else if (p === 'holding') setPhase(inspectionRef.current && inspectRef.current ? 'inspecting' : 'idle');
+  }, [startSolve]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -125,10 +133,15 @@ export default function Timer() {
     return () => {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
-      cancelAnimationFrame(rafRef.current);
-      if (inspectRef.current) window.clearInterval(inspectRef.current);
     };
   }, [press, release, stopSolve]);
+
+  // Stop the display loop and countdown on unmount only, not whenever the key
+  // listeners are re-attached.
+  useEffect(() => () => {
+    cancelAnimationFrame(rafRef.current);
+    if (inspectRef.current) window.clearInterval(inspectRef.current);
+  }, []);
 
   const times = session.map((s) => s.ms);
   const best = times.length ? Math.min(...times) : null;

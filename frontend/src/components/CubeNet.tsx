@@ -12,13 +12,14 @@ interface Props {
   flagged?: number[];
   lowConfidence?: number[];
   compact?: boolean;
+  names?: Record<string, string>; // facelet letter -> colour name, for screen readers
 }
 
-export function CubeNet({ facelets, colors, onPaint, flagged = [], lowConfidence = [], compact }: Props) {
+export function CubeNet({ facelets, colors, onPaint, flagged = [], lowConfidence = [], compact, names }: Props) {
   const flaggedSet = new Set(flagged);
   const lowSet = new Set(lowConfidence);
   return (
-    <div className={`net ${compact ? 'net--compact' : ''}`} role="grid" aria-label="Cube net">
+    <div className={`net ${compact ? 'net--compact' : ''}`} role="group" aria-label="Cube net">
       {FACES.map((face, f) =>
         Array.from({ length: 9 }, (_, i) => {
           const idx = f * 9 + i;
@@ -26,8 +27,15 @@ export function CubeNet({ facelets, colors, onPaint, flagged = [], lowConfidence
           const isCentre = i === 4;
           const letter = facelets[idx];
           const classes = ['net__sticker'];
-          if (flaggedSet.has(idx)) classes.push('net__sticker--flagged');
-          if (lowSet.has(idx)) classes.push('net__sticker--unsure');
+          const notes = [letter === '?' ? 'not set' : names?.[letter] ?? letter];
+          if (flaggedSet.has(idx)) {
+            classes.push('net__sticker--flagged');
+            notes.push('has a problem');
+          }
+          if (lowSet.has(idx)) {
+            classes.push('net__sticker--unsure');
+            notes.push('unsure');
+          }
           if (isCentre) classes.push('net__sticker--centre');
           return (
             <button
@@ -41,7 +49,7 @@ export function CubeNet({ facelets, colors, onPaint, flagged = [], lowConfidence
               }}
               disabled={!onPaint || isCentre}
               onClick={() => onPaint?.(idx)}
-              aria-label={`${face} face sticker ${i + 1}${isCentre ? ' (centre)' : ''}`}
+              aria-label={`${face} face sticker ${i + 1}${isCentre ? ' (centre)' : ''}: ${notes.join(', ')}`}
             />
           );
         }),

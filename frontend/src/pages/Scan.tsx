@@ -34,6 +34,14 @@ export default function Scan() {
   const [captures, setCaptures] = useState<Captures>({});
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const start = useCallback(async (mode: 'environment' | 'user') => {
     setError(null);
@@ -43,6 +51,11 @@ export default function Scan() {
         video: { facingMode: { ideal: mode }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
+      // The user left the page while the permission prompt was open.
+      if (!mounted.current) {
+        s.getTracks().forEach((t) => t.stop());
+        return;
+      }
       const track = s.getVideoTracks()[0];
       const setting = track.getSettings().facingMode;
       // Laptop webcams usually report no facing mode but face the user.
@@ -50,6 +63,9 @@ export default function Scan() {
       setStream(s);
       setFacing(mode);
     } catch (e) {
+      // Back to the start screen, where the error is shown (the old stream,
+      // if any, was stopped above).
+      setStream(null);
       const name = (e as DOMException)?.name;
       setError(name === 'NotAllowedError'
         ? 'Camera permission was denied. Allow camera access in your browser settings, or enter the colours by hand.'
@@ -65,6 +81,7 @@ export default function Scan() {
     v.srcObject = stream;
     const onMeta = () => setAspect(v.videoWidth / v.videoHeight || 4 / 3);
     v.addEventListener('loadedmetadata', onMeta);
+    v.addEventListener('resize', onMeta); // the frame turns when the phone does
     void v.play().catch(() => undefined);
     const id = window.setInterval(() => {
       const samples = sampleGrid(v, canvasRef.current);
@@ -73,6 +90,7 @@ export default function Scan() {
     return () => {
       window.clearInterval(id);
       v.removeEventListener('loadedmetadata', onMeta);
+      v.removeEventListener('resize', onMeta);
     };
   }, [stream]);
 
