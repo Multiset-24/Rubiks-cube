@@ -547,8 +547,8 @@ private:
         TutorStep s;
         s.title = "Pop out the " + pieceName({c.w, c.a, c.b}) + " corner";
         s.observe = "This corner is in the bottom layer, but in the wrong spot or twisted.";
-        s.instruction = "Turn the whole cube so it is at the front-right of the bottom, then do R U R' U' once. "
-                        "That lifts it into the top layer.";
+        s.instruction = std::string(k ? "Turn the whole cube so it is at the front-right of the bottom, then do" : "It is at the front-right of the bottom: do") +
+                        " R U R' U' once. That lifts it into the top layer.";
         s.setup = turns(Axis::Y, k);
         s.algorithm = kSexyRef;
         s.focus = {loc.facelet[0], loc.facelet[1], loc.facelet[2]};
@@ -695,8 +695,8 @@ private:
         s.title = "Free a stuck edge";
         s.observe = "Every top edge has " + name(yellow_) + ", but the " + pieceName({a, b}) +
                     " edge is stuck in the middle layer (wrong slot or flipped).";
-        s.instruction = "Turn the whole cube so that slot is front-right, then do the right insert once. "
-                        "It swaps the stuck edge out to the top so you can insert it properly.";
+        s.instruction = std::string(k ? "Turn the whole cube so that slot is front-right, then do" : "That slot is front-right: do") +
+                        " the right insert once. It swaps the stuck edge out to the top so you can insert it properly.";
         s.setup = turns(Axis::Y, k);
         s.algorithm = kRightRef;
         s.focus = {f0, f1};
