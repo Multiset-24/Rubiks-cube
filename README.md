@@ -1,131 +1,100 @@
-# RubiksCube Solver
+# Zen Cube
 
+Scan a Rubik's Cube with your phone or laptop camera, then learn to solve it with a step-by-step beginner tutor.
 
-## Table of Contents
+**Live:** https://zen-cube-solver.netlify.app (frontend). The API runs on Render's free tier and sleeps when idle, so the first request after a while takes about a minute.
 
-1. [Project Overview](#project-overview)
-2. [Prerequisites](#prerequisites)
-3. [Features](#features)
-4. [Directory Structure](#directory-structure)
-5. [Installation & Build](#installation--build)
-6. [Future developments](#Future-developments)
-7. [License](#license)
+![Tutor](docs/screenshots/tutor.png)
 
----
+This started as a C++ solver I wrote to study search algorithms (BFS, DFS, IDDFS and IDA\* with Korf's corner pattern database). That code is still here in `engine/`, now with its bugs fixed. Around it there is now a C++ HTTP service and a React frontend.
 
-## Project Overview
+## What it does
 
-A C++ project that implements that implements multiples algorithms such as BFS,DFS,IDDFS and “heuristic‐driven” AI-algorithm called IDA* introduced by E.Korf in his [research paper](https://www.cs.princeton.edu/courses/archive/fall06/cos402/papers/korfrubik.pdf) in 1985.
+- **Camera scan.** You show each face to the camera. Each sticker is matched against the six centre colours of your own cube, under the constraint that every colour appears exactly nine times. You then fix anything it got wrong on an editable net.
+- **Validation.** Before solving, the server checks the cube can actually exist. It explains any problem in plain terms, for example "one edge is flipped" or "there are 10 white stickers", and highlights the stickers involved.
+- **Three solvers.**
+  - *Learn*: the layer-by-layer beginner method. It has nine stages, and every step comes with what to look for, what to do, the moves, and the piece to watch. Optional quiz questions ask you to read the cube first ("the white sticker points right: how many times do you repeat R U R' U'?").
+  - *Fast*: Kociemba's two-phase algorithm, about 21 moves for any cube.
+  - *Optimal*: the original engine's IDA\* with the corner database. It finds the shortest solution for cubes up to about 9 moves from solved, and falls back to Fast for deeper ones.
+- **3D player.** Each step's moves animate on a Three.js cube while the relevant piece is highlighted. A zen mode shows only the cube and the next move.
+- **Timer and progress.** There is a WCA-style timer with random-state scrambles. With an account you also get history, best single, Ao5/Ao12, daily streaks, quiz accuracy and a leaderboard. It works without an account, and anything saved locally moves to your account when you sign in.
 
-Under the hood, you’ll explore:
+| Scan | Review | Progress |
+| --- | --- | --- |
+| ![Scan](docs/screenshots/scan.png) | ![Review](docs/screenshots/review.png) | ![Progress](docs/screenshots/progress.png) |
 
-- **State Representation & Data Structures**: Custom cube-state models (1D/3D arrays, bitboards) and fast permutation indexers.
-- **Heuristic Design**: Pattern databases as admissible heuristics, and how their precomputation accelerates search.
-- **Algorithmic Analysis**: Time- and space-complexity considerations for each solver, and how heuristic quality affects performance.
-- **OOP & SOLID Principles**:
-   - **Abstraction**: Clean interfaces (`RubiksCube`, `PatternDatabase`, `Solver`).
-   - **Encapsulation**: Implementation details hidden behind `.h`/`.cpp` boundaries.
-   - **Inheritance & Polymorphism**: A `Solver` base class with interchangeable BFS/DFS/IDDFS/IDA* implementations.
-   - **Separation of Concerns**: Clear layering between cube model, heuristic generator, and search engine.
+## How it's built
 
-By studying and extending this project, you’ll deepen your understanding of search algorithms, heuristics, complexity analysis, and robust software design—key topics you can discuss in any technical interview. Built with CMake and zero external dependencies, it’s a portable, self-contained demonstration of “core CS” applied to one of the most iconic puzzles in algorithmics.
-
-## Prerequisites
-
-- **CMake** ≥ 3.15 and **CLion** IDE 
-- A **C++17**-compatible compiler (GCC, Clang, or MSVC)
-- **Git** (optional, for cloning the repository)  
-- good Knowledge of Oops fundamentals and AI search algorithms
----
-## features
-
-- **Four Solvers**: BFS, DFS, IDDFS, and heuristic‐driven IDA*.
-- **Pattern‐Database Heuristics**: Precompute and plug in admissible heuristics.
-- **Flexible Cube Models**: 1D/3D arrays and bitboard representations with fast indexing.
-- **Clean OOP Architecture**: Abstract `Solver` interface, encapsulated cube models, and SOLID design.
-- **CLI & CMake**: Easy configuration of algorithm, heuristic, and build—no external dependencies.
-
-
-## Directory Structure
-
-````
-RubiksCubeSolver/
-├── assets
-├── cmake-build-debug/           
-├── DataBase/
-│   ├── CornerDatabase.txt              
-├── Model/
-│       ├── PatternDatabase/     
-│       │   ├── PatternDatabase.h
-│       ├── RubiksCube.cpp
-│       ├── RubiksCube.h
-│       ├── RubiksCube1dArray.cpp
-│       ├── RubiksCube3dArray.cpp
-│       └── RubiksCubeBitBoard.cpp
-├── Pattern_Database/    
-│       ├── CornerDBMaker.cpp
-│       ├── CornerDBMaker.h
-│       ├── CornerPatternDatabase.cpp
-│       ├── CornerPatternDatabase.h
-│       ├── math.cpp
-│       ├── math.h
-│       ├── NibbleArray.cpp
-│       ├── NibbleArray.h
-│       ├── PatternDatabase.cpp
-│       ├── PatternDatabase.h
-│       └── PermutationIndexer.h
-└── Solvers/                     
-         ├── BfsSolver.h
-         ├── DfsSolver.h
-         ├── IdaStarSolver.h
-         └── IddfsSolver.h
-├── .gitignore
-├── CMakeLists.txt
-├── LICENSE
-├── main.cpp
-├── README.md
-````
-
-
----
-
-
-## Installation & Build
-
-```bash
-# 1.Clone the repository
-git clone https://github.com/Multiset-24/Rubiks-cube.git and then open folder in Clion IDE
-
-# 2.Click on edit configuration options as shown below image for you there will bw no Rubiks cube there so click on edit configuration or add configurations
+```
+frontend/  React 19 + TypeScript + Vite + Three.js    -> Netlify
+backend/   C++17 HTTP service (cpp-httplib)          -> Render (Docker)
+  src/core/     cube models, validation, Kociemba, beginner tutor, engine adapter
+  src/server/   routes, services, storage (Postgres / in-memory), infra
+engine/    the original solver (models, BFS/DFS/IDDFS/IDA*, pattern database)
+docs/      design notes, API, algorithms, deployment
 ```
 
-<img alt="img.png" src="assets/img.png" width="300"/>
+A request to `/api/v1/solve` goes through these steps:
+1. Validation.
+2. An LRU cache. Solutions depend only on the input, so they never go stale.
+3. Request coalescing, so identical concurrent requests share one solve.
+4. A bounded worker pool with load shedding.
+5. The solver, under a deadline.
+
+Accounts use salted PBKDF2 password hashes and stateless JWTs. Runs are stored in Postgres, and history pages use keyset pagination. The details and trade-offs are in [docs/SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md).
+
+## Numbers
+
+Measured with `zencube_bench` (500 random-state cubes) and local HTTP tests:
+
+| | moves (mean / max) | time p50 | time p95 |
+| --- | --- | --- | --- |
+| Kociemba two-phase | 20.8 / 21 | 3.4 ms | 64 ms |
+| Beginner tutor | 163 / 217 face turns | 0.25 ms | 0.64 ms |
+| IDA\*, 8-move scrambles | optimal | 10.7 ms | (max 533 ms) |
+
+- The full corner pattern database (88,179,840 states, 11 moves deep) builds in about 9 s at image build time.
+- Under Render free-tier limits (0.1 CPU, 512 MB) the container is ready about 5 s after start and uses 52 MB of RAM.
+- Cached solves take about 1 ms server-side.
+
+## Run it locally
+
+Requirements: CMake 3.16+, a C++17 compiler, OpenSSL, libpq and GoogleTest (`apt install cmake ninja-build libssl-dev libpq-dev libgtest-dev`), and Node 22.
 
 ```bash
-# 3.Now click on + options on top left in appeared window
+# backend
+cmake -S . -B build -G Ninja
+cmake --build build
+./build/backend/zencube_tests                                  # 64 tests
+./build/backend/src/server/zencube_server --build-tables --data-dir data   # optional: enables Optimal
+DATA_DIR=data ./build/backend/src/server/zencube_server       # http://localhost:8080
 
-# 4.Now click on Cmake Application and fill the options as below
+# frontend
+cd frontend && npm install && npm run dev                      # http://localhost:5173
 ```
 
-<img alt="img_2.png" height="300" src="assets/img_2.png" width="300"/>
+Without `DATABASE_URL` the server keeps accounts and runs in memory. To use Postgres locally, set `DATABASE_URL=postgresql://...`; the server creates its tables on start.
 
-```bash
-# 5.Now click on Run and build (Hammer symbol) on right of configuration and you are all set .
+The original CLI still works: `./build/engine/rubiks_cli --solver ida --scramble 7`.
 
-# 6.By default Solver is set to IDA* but you can change it to any of the algorithm you want and feed your cube in custom cube 3d array shuffled upto 8 times or use a random shuffle function .
-```
+## Deploying
 
-## Future developments
-+ This projects can be extended to solve more shuffled cube of the order of greater than 13 by accumulating the corner and edge database as originally presented by Korf in his research paper.         
-         <br>
-+ Computer Vision can be used to input cube from the user directly using webcam and building the model using python scripts for solver to solve the cube 
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) has the step-by-step version:
+- **Database**: create a free Neon Postgres database.
+- **Backend**: on Render, choose New → Blueprint and select this repo (`render.yaml`), then paste the Neon URL when asked.
+- **Frontend**: deploys to Netlify from `netlify.toml`.
 
-## License
+## Docs
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+- [System design](docs/SYSTEM_DESIGN.md): architecture, request path, caching, failure handling, data model, scaling.
+- [API](docs/API.md): endpoints, request/response examples, error codes.
+- [Algorithms](docs/ALGORITHMS.md): facelet model, beginner method, Kociemba, IDA\* and the pattern database, colour classification.
+- [Engine fixes](docs/ENGINE_FIXES.md): bugs found in the original solver and how they were confirmed.
 
-This project is licensed under the MIT License.  
-See the [LICENSE](LICENSE) file for more details.
+## Credits
 
+- Kociemba's two-phase algorithm: Herbert Kociemba, http://kociemba.org/cube.htm
+- IDA\* with pattern databases: Richard Korf, *Finding Optimal Solutions to Rubik's Cube Using Pattern Databases* (1997).
+- [cpp-httplib](https://github.com/yhirose/cpp-httplib) and [nlohmann/json](https://github.com/nlohmann/json), both MIT, vendored in `backend/third_party`.
 
-
+MIT licensed, see [LICENSE](LICENSE).

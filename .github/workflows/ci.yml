@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (C++ build + tests on Postgres)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: zencube_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libpq-dev libgtest-dev libssl-dev
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build
+      - name: Test (including Postgres contract tests and the full 88M-state database check)
+        env:
+          ZENCUBE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/zencube_test
+        run: ./build/backend/zencube_tests --gtest_brief=1
+
+  frontend:
+    name: Frontend (typecheck, tests, build)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-24.04
+    needs: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image (runs the test suite and precomputes tables)
+        run: docker build -f backend/Dockerfile -t zen-cube-api:ci --build-arg APP_VERSION=${GITHUB_SHA::7} .
+      - name: Smoke test
+        run: |
+          docker run -d --name api -p 8080:8080 zen-cube-api:ci
+          for i in $(seq 1 30); do curl -sf localhost:8080/readyz && break; sleep 1; done
+          curl -sf -X POST localhost:8080/api/v1/solve \
+            -d '{"cube":"UUFUUFUUFRRRRRRRRRFFDFFDFFDDDBDDBDDBLLLLLLLLLUBBUBBUBB","method":"kociemba"}'
