@@ -1,0 +1,11 @@
+.git
+.github
+.idea
+assets
+docs
+frontend
+**/node_modules
+**/build
+**/cmake-build-*
+backend/data
+*.db

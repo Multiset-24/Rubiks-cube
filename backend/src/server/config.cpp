@@ -41,7 +41,9 @@ std::vector<std::string> splitList(const std::string &s) {
 Config Config::fromEnv(int argc, char **argv) {
     Config c;
     c.port = envNumber("PORT", c.port);
-    c.version = env("APP_VERSION", c.version);
+    // Render exposes the deployed commit; use it when no explicit version is set.
+    std::string commit = env("RENDER_GIT_COMMIT", "");
+    c.version = env("APP_VERSION", commit.empty() ? c.version : commit.substr(0, 7));
     c.logLevel = env("LOG_LEVEL", c.logLevel);
     c.dataDir = env("DATA_DIR", c.dataDir);
     c.databaseUrl = env("DATABASE_URL", "");

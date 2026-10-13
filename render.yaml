@@ -1,0 +1,39 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# New -> Blueprint -> pick this repository. Render asks for DATABASE_URL
+# (paste a free Neon Postgres URL; see docs/DEPLOYMENT.md) and generates
+# JWT_SECRET for you.
+services:
+  - type: web
+    name: zen-cube-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    # Traffic switches to a new deploy only once it reports ready
+    # (tables loaded, database reachable): zero-downtime deploys.
+    healthCheckPath: /readyz
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - engine/**
+        - backend/**
+        - CMakeLists.txt
+        - render.yaml
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://zen-cube-solver.netlify.app,https://*--zen-cube-solver.netlify.app,http://localhost:5173
+      - key: LOG_LEVEL
+        value: info
+      # The free instance has a fraction of one CPU: keep concurrency modest
+      # and let the bulkheads shed load instead of queueing.
+      - key: WORKER_THREADS
+        value: "8"
+      - key: MAX_CONCURRENT_SOLVES
+        value: "2"
+      - key: DB_POOL_SIZE
+        value: "3"

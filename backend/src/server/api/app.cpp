@@ -129,7 +129,19 @@ std::string App::clientIp(const httplib::Request &req) const {
 }
 
 bool App::originAllowed(const std::string &origin) const {
-    for (const auto &o: config_.corsOrigins) if (o == "*" || o == origin) return true;
+    for (const auto &o: config_.corsOrigins) {
+        if (o == "*" || o == origin) return true;
+        // "https://*.example.com" or "https://*--site.netlify.app" (deploy previews):
+        // the part before '*' must be a prefix and the part after it a suffix.
+        size_t star = o.find('*');
+        if (star == std::string::npos) continue;
+        std::string prefix = o.substr(0, star), suffix = o.substr(star + 1);
+        if (origin.size() > prefix.size() + suffix.size() && origin.compare(0, prefix.size(), prefix) == 0 &&
+            origin.compare(origin.size() - suffix.size(), suffix.size(), suffix) == 0 &&
+            origin.find('/', prefix.size()) == std::string::npos) {
+            return true;
+        }
+    }
     return false;
 }
 

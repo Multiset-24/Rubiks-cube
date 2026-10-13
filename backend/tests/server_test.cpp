@@ -70,7 +70,7 @@ Config baseConfig() {
     c.solveRateRps = 1000;
     c.solveRateBurst = 1000;
     c.authRatePerMinute = 1000;
-    c.corsOrigins = {"https://zen.example"};
+    c.corsOrigins = {"https://zen.example", "https://*--zen.netlify.app"};
     c.maxBodyBytes = 64 * 1024;
     return c;
 }
@@ -194,6 +194,11 @@ TEST(Server, CorsAndRequestIds) {
     EXPECT_EQ(pre->status, 204);
     EXPECT_EQ(pre->get_header_value("Access-Control-Allow-Origin"), "https://zen.example");
     EXPECT_NE(pre->get_header_value("Access-Control-Allow-Headers").find("Authorization"), std::string::npos);
+
+    auto preview = c.Get("/healthz", {{"Origin", "https://deploy-preview-7--zen.netlify.app"}});
+    EXPECT_EQ(preview->get_header_value("Access-Control-Allow-Origin"), "https://deploy-preview-7--zen.netlify.app");
+    auto lookalike = c.Get("/healthz", {{"Origin", "https://evil.com/x--zen.netlify.app"}});
+    EXPECT_FALSE(lookalike->has_header("Access-Control-Allow-Origin"));
 
     auto evil = c.Get("/healthz", {{"Origin", "https://evil.example"}});
     EXPECT_FALSE(evil->has_header("Access-Control-Allow-Origin"));
